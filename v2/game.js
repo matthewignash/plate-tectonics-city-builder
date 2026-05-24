@@ -55,6 +55,55 @@ function clear(node) {
 }
 
 // ════════════════════════════════════════════════════════════════════
+// SVG HELPERS — DOMParser turns trusted sprite strings into safe DOM nodes
+// ════════════════════════════════════════════════════════════════════
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+function svgChildrenFromString(s) {
+  const wrapper = `<svg xmlns="${SVG_NS}">${s}</svg>`;
+  const doc = new DOMParser().parseFromString(wrapper, "image/svg+xml");
+  const root = doc.documentElement;
+  if (root.getElementsByTagName("parsererror").length) {
+    console.error("SVG parse error in fragment:", root.textContent);
+    return [];
+  }
+  return Array.from(root.childNodes);
+}
+
+function appendSvgChildren(parent, svgFragmentString) {
+  for (const node of svgChildrenFromString(svgFragmentString)) {
+    parent.appendChild(node);
+  }
+}
+
+function appendOverlay(parent, techKey) {
+  const overlay = TECH_OVERLAYS[techKey];
+  if (!overlay) return;
+  appendSvgChildren(parent, overlay.svg);
+}
+
+function buildBuildingNode(buildingKey, techSet) {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", "0 0 72 64");
+  svg.setAttribute("preserveAspectRatio", "xMidYMax meet");
+  svg.classList.add("tile-sprite");
+
+  // Behind layer (foundations under, lahar trench)
+  for (const tk of behindLayerOrder(techSet)) appendOverlay(svg, tk);
+  // Front-tile layer (tsunami wall — in front of tile but behind building base)
+  for (const tk of frontTileLayerOrder(techSet)) appendOverlay(svg, tk);
+  // Building body
+  appendSvgChildren(svg, BUILDING_SPRITES[buildingKey]);
+  // Roof — steep if ash_roof installed, else flat
+  const roofKey = techSet.has("ash_roof") ? `${buildingKey}_steep` : `${buildingKey}_flat`;
+  appendSvgChildren(svg, BUILDING_ROOFS[roofKey]);
+  // Front layer (overlays drawn on top of building)
+  for (const tk of frontLayerOrder(techSet)) appendOverlay(svg, tk);
+  return svg;
+}
+
+// ════════════════════════════════════════════════════════════════════
 // SCREEN MANAGEMENT
 // ════════════════════════════════════════════════════════════════════
 
@@ -196,12 +245,23 @@ function renderGrid() {
     const key = `${tile.col},${tile.row}`;
     const placement = state.placements.get(key);
     if (placement) {
-      t.textContent = BUILDINGS[placement.building].icon;
+      t.appendChild(buildBuildingNode(placement.building, placement.tech));
       if (placement.tech.size > 0) {
         t.appendChild(el("span", { class: "tile-tech", text: `+${placement.tech.size}` }));
       }
     }
     grid.appendChild(t);
+  }
+  renderCitywideBadge();
+}
+
+function renderCitywideBadge() {
+  const main = document.querySelector(".build-main");
+  if (!main) return;
+  const existing = main.querySelector(".citywide-badge");
+  if (existing) existing.remove();
+  if (state.citywideEarlyWarning) {
+    main.appendChild(el("div", { class: "citywide-badge", text: "📡 City-wide alert active" }));
   }
 }
 
@@ -240,14 +300,44 @@ function makePaletteItem(type, key, item) {
   const node = el("div", {
     class: classes.join(" "),
     onclick: () => selectItem(type, key),
-    onmouseenter: () => setPaletteInfo(item.desc || `${item.name} — $${formatCost(item.cost)}`),
-    onmouseleave: () => setPaletteInfo("Select a building or tech, then click a tile to place."),
   },
     el("span", { class: "palette-icon", text: item.icon }),
     el("span", { text: item.name }),
     el("span", { class: "palette-cost", text: `$${formatCost(item.cost)}` })
   );
+  node.addEventListener("mouseenter", () => {
+    setPaletteInfo(item.desc || `${item.name} — $${formatCost(item.cost)}`);
+    if (type === "tech") showTechDemo(key, node);
+  });
+  node.addEventListener("mouseleave", () => {
+    setPaletteInfo("Select a building or tech, then click a tile to place.");
+    if (type === "tech") hideTechDemo();
+  });
   return node;
+}
+
+function showTechDemo(techKey, sourceEl) {
+  const demoSvg = TECH_DEMOS[techKey];
+  const popover = document.getElementById("tech-demo-popover");
+  if (!demoSvg || !popover) return;
+  clear(popover);
+  appendSvgChildren(popover, demoSvg);
+  const rect = sourceEl.getBoundingClientRect();
+  const popWidth = 200;
+  const isMobile = window.innerWidth < 900;
+  if (isMobile) {
+    popover.style.left = `${rect.left}px`;
+    popover.style.top = `${rect.bottom + 8}px`;
+  } else {
+    popover.style.left = `${Math.max(8, rect.left - popWidth - 8)}px`;
+    popover.style.top = `${rect.top}px`;
+  }
+  popover.classList.add("visible");
+}
+
+function hideTechDemo() {
+  const popover = document.getElementById("tech-demo-popover");
+  if (popover) popover.classList.remove("visible");
 }
 
 function setPaletteInfo(text) {

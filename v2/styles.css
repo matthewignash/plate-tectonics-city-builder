@@ -285,10 +285,207 @@ body {
 .btn-secondary { background: var(--bg); color: var(--ink); border: 1.5px solid var(--line); }
 .btn-secondary:hover { border-color: var(--accent); }
 
+/* ───── SVG tile sprites (Phase B) ───── */
+.tile { font-size: 0; /* hide leftover emoji baseline */ }
+.tile-sprite {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Building piece fills */
+.sprite-building .iso-front  { fill: var(--front-color, #d8c298); stroke: var(--ink); stroke-width: 0.5; }
+.sprite-building .iso-side   { fill: var(--side-color, #b9a378); stroke: var(--ink); stroke-width: 0.5; }
+.sprite-building .iso-door   { fill: #5a4530; }
+.sprite-building .iso-window { fill: #7ba3b0; }
+.sprite-building .iso-trim   { fill: #6b5a3e; }
+.sprite-building .iso-trim-line { stroke: var(--ink); stroke-width: 0.6; fill: none; }
+.sprite-building .iso-arch   { fill: #6b5a3e; }
+.sprite-building .iso-cross  { fill: #c92d2d; }
+.sprite-building .iso-tower  { fill: var(--front-color, #d8c298); stroke: var(--ink); stroke-width: 0.5; }
+.sprite-building .iso-tower-roof { fill: var(--accent); }
+.sprite-building .iso-stack       { fill: #6e6e6e; stroke: var(--ink); stroke-width: 0.4; }
+.sprite-building .iso-stack-rim   { fill: #4a4a4a; }
+.sprite-building .iso-awning      { fill: var(--accent); stroke: var(--ink); stroke-width: 0.5; }
+
+/* Per-building color overrides via CSS variables */
+.sprite-housing  { --front-color: #d8c298; --side-color: #b9a378; }
+.sprite-hospital { --front-color: #f3ecd8; --side-color: #d8d0b8; }
+.sprite-school   { --front-color: #e8d075; --side-color: #c8b055; }
+.sprite-power    { --front-color: #b4ada0; --side-color: #94928a; }
+.sprite-market   { --front-color: #c8b87a; --side-color: #a89858; }
+
+/* Default flat roof */
+.iso-roof { fill: #8b7355; stroke: var(--ink); stroke-width: 0.5; }
+/* Steep pitched roof (when ash_roof installed) */
+.iso-roof-steep polygon { fill: #6b5a3e; stroke: var(--ink); stroke-width: 0.5; }
+
+/* Tech overlay fills */
+.overlay-base-isolation path { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-linecap: round; }
+.overlay-shear-walls   line  { stroke: rgba(31, 42, 55, 0.55); stroke-width: 1.2; }
+.overlay-tsunami-wall  rect  { fill: #9b9080; stroke: var(--ink); stroke-width: 0.5; }
+.overlay-tsunami-wall  line  { stroke: #5a4530; stroke-width: 0.4; }
+.overlay-deep-foundation line { stroke: #4a3a25; stroke-width: 1.2; }
+.overlay-lava-berm polygon { fill: #8b5a3a; stroke: var(--ink); stroke-width: 0.5; }
+.overlay-lahar-diversion polygon { fill: #4a3a28; stroke: var(--ink); stroke-width: 0.3; }
+.overlay-lahar-diversion .lahar-water { fill: #6b5a3e; stroke: none; }
+.overlay-pyroclastic-shelter rect    { fill: #8a8278; stroke: var(--ink); stroke-width: 0.4; }
+.overlay-pyroclastic-shelter polygon { fill: #6b6058; stroke: var(--ink); stroke-width: 0.4; }
+.overlay-pyroclastic-shelter .bunker-door { fill: #2a2a2a; stroke: none; }
+
+/* ───── City-wide badge (early warning) ───── */
+.citywide-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--accent);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  pointer-events: none;
+  z-index: 3;
+}
+.build-main { position: relative; }
+
+/* ───── Tech demo popover ───── */
+.tech-demo-popover {
+  position: fixed;
+  display: none;
+  background: var(--card);
+  border: 1.5px solid var(--accent);
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  z-index: 1000;
+  width: 200px;
+  pointer-events: none;
+}
+.tech-demo-popover.visible { display: block; }
+.tech-demo-popover .demo-svg { width: 100%; height: auto; }
+.tech-demo-popover .demo-label {
+  font-family: sans-serif;
+  font-size: 4px;
+  fill: var(--muted);
+}
+.tech-demo-popover .demo-building       { fill: #d8c298; stroke: var(--ink); stroke-width: 0.6; }
+.tech-demo-popover .demo-window         { fill: #7ba3b0; }
+.tech-demo-popover .demo-door           { fill: #5a4530; }
+.tech-demo-popover .demo-ground         { fill: #b9a378; }
+.tech-demo-popover .demo-ground-line    { stroke: var(--ink); stroke-width: 0.5; }
+.tech-demo-popover .demo-ground-liquid  { fill: #b9a378; }
+.tech-demo-popover .demo-pile           { stroke: #4a3a25; stroke-width: 1; stroke-dasharray: 2 2; }
+.tech-demo-popover .demo-brace          { stroke: rgba(31, 42, 55, 0.6); stroke-width: 1.2; }
+.tech-demo-popover .demo-wall           { fill: #9b9080; stroke: var(--ink); stroke-width: 0.5; }
+.tech-demo-popover .demo-wave           { fill: #6f9bb0; opacity: 0.85; }
+.tech-demo-popover .demo-mast           { stroke: var(--ink); stroke-width: 1.5; }
+.tech-demo-popover .demo-antenna        { fill: var(--accent); }
+.tech-demo-popover .demo-ring           { fill: none; stroke: var(--accent); stroke-width: 1; opacity: 0.7; }
+.tech-demo-popover .demo-person         { fill: var(--ink); }
+.tech-demo-popover .demo-berm           { fill: #8b5a3a; stroke: var(--ink); stroke-width: 0.5; }
+.tech-demo-popover .demo-lava           { fill: #d97a4b; }
+.tech-demo-popover .demo-pitched-roof   { fill: #6b5a3e; stroke: var(--ink); stroke-width: 0.5; }
+.tech-demo-popover .demo-ash            { fill: #888; }
+.tech-demo-popover .demo-trench         { fill: #4a3a28; }
+.tech-demo-popover .demo-mud            { stroke: #6b5a3e; }
+.tech-demo-popover .demo-bunker         { fill: #8a8278; stroke: var(--ink); stroke-width: 0.4; }
+.tech-demo-popover .demo-bunker-roof    { fill: #6b6058; stroke: var(--ink); stroke-width: 0.4; }
+.tech-demo-popover .demo-pyroclastic    { fill: rgba(217, 122, 75, 0.85); }
+
+/* ───── Hover demo animations (~2s loops) ───── */
+@keyframes shakeGround {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(3px); }
+  75% { transform: translateX(-3px); }
+}
+.anim-shake-ground { animation: shakeGround 0.6s ease-in-out infinite; transform-origin: center; }
+
+@keyframes tiltSnap {
+  0%, 100% { transform: rotate(0deg); }
+  40% { transform: rotate(-7deg); }
+  60% { transform: rotate(7deg); }
+}
+.anim-tilt-snap { animation: tiltSnap 1.8s ease-in-out infinite; }
+
+@keyframes waveSweep {
+  0% { transform: translateX(0); opacity: 1; }
+  60% { transform: translateX(20px); opacity: 1; }
+  80% { transform: translateX(20px); opacity: 0.6; }
+  100% { transform: translateX(0); opacity: 0; }
+}
+.anim-wave-sweep { animation: waveSweep 2s ease-out infinite; }
+
+@keyframes liquefy {
+  0%, 100% { opacity: 1; transform: translateY(0); }
+  50% { opacity: 0.6; transform: translateY(2px); }
+}
+.anim-liquefy { animation: liquefy 1.6s ease-in-out infinite; }
+
+@keyframes pulse {
+  0% { opacity: 1; transform: scale(0.6); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+.anim-pulse circle { animation: pulse 1.6s ease-out infinite; transform-origin: 40px 18px; }
+.anim-pulse circle:nth-child(2) { animation-delay: 0.5s; }
+.anim-pulse circle:nth-child(3) { animation-delay: 1.0s; }
+
+@keyframes peopleFlee {
+  0% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(-20px); opacity: 0; }
+}
+.anim-people-flee circle:first-child { animation: peopleFlee 1.8s ease-in infinite; }
+.anim-people-flee circle:last-child  { animation: peopleFlee 1.8s ease-in infinite reverse; }
+
+@keyframes lavaDivert {
+  0%, 100% { transform: translateX(0); opacity: 1; }
+  50% { transform: translateX(-4px); opacity: 0.8; }
+}
+.anim-lava-divert { animation: lavaDivert 1.4s ease-in-out infinite; }
+
+@keyframes ashfall {
+  0% { transform: translateY(-12px); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(34px); opacity: 0; }
+}
+.anim-ashfall circle { animation: ashfall 2s linear infinite; }
+.anim-ashfall circle:nth-child(2) { animation-delay: 0.5s; }
+.anim-ashfall circle:nth-child(3) { animation-delay: 1.0s; }
+.anim-ashfall circle:nth-child(4) { animation-delay: 1.5s; }
+
+@keyframes laharFlow {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -40; }
+}
+.anim-lahar-flow .demo-mud { stroke-dasharray: 6 4; animation: laharFlow 1.5s linear infinite; }
+
+@keyframes pyroclasticSweep {
+  0% { transform: translateX(-30px); opacity: 0; }
+  30% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translateX(80px); opacity: 0; }
+}
+.anim-pyroclastic-sweep polygon { animation: pyroclasticSweep 2.4s ease-out infinite; }
+
+@keyframes buildingDestroy {
+  0%, 30% { opacity: 1; transform: scale(1, 1); }
+  60% { opacity: 0.4; transform: scale(1, 0.6); }
+  100% { opacity: 0.1; transform: scale(1, 0.3); }
+}
+.anim-building-destroy rect {
+  animation: buildingDestroy 2.4s ease-in infinite;
+  transform-origin: center bottom;
+  transform-box: fill-box;
+}
+
 /* ───── Responsive ───── */
 @media (max-width: 900px) {
   .build-layout { grid-template-columns: 1fr; }
   .build-side { order: -1; }
   .grid { grid-template-columns: repeat(8, 44px); grid-template-rows: repeat(6, 44px); }
-  .tile { font-size: 16px; }
+  .tile { font-size: 0; }
+  .tech-demo-popover { width: 160px; }
 }
