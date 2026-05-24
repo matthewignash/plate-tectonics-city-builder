@@ -1,0 +1,294 @@
+/* Tectonic City Builder v2 — palette + layout */
+
+:root {
+  --bg: #f6f4ee;
+  --ink: #1f2a37;
+  --muted: #5b6573;
+  --card: #ffffff;
+  --line: #d9d4c4;
+  --accent: #c9542d;
+  --accent-soft: #f4ddcf;
+  --ok: #2e7d4f;
+  --warn: #c9882d;
+  --bad: #b3261e;
+
+  /* Tile zone colors */
+  --tile: #e9e4d3;
+  --tile-bedrock: #d6cdb0;
+  --tile-fill: #ddd0a0;
+  --tile-reclaimed: #c8b87a;          /* NEW: reclaimed land, deeper than fill */
+  --tile-coast: #c6dbe2;
+  --tile-ocean: #6f9bb0;
+  --tile-fault: #b3826b;
+  --tile-urban: #e5dcc6;              /* NEW: dense urban, lighter than bedrock */
+  --tile-urban-near: #d9c6a5;         /* NEW: near-fault urban */
+  --tile-lava-hi: #d97a4b;
+  --tile-lava-med: #e5b08c;
+  --tile-ash: #b9b09d;
+  --tile-volcano: #5b3a2b;
+  --tile-pyroclastic: #8b3a2b;        /* NEW: lethal pyroclastic zone */
+  --tile-lahar: #8c7a52;              /* NEW: lahar mudflow valley */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ───── Screen system ───── */
+.screen { display: none; padding: 24px; max-width: 1200px; margin: 0 auto; }
+.screen.active { display: block; }
+
+/* ───── Title screen ───── */
+.title-hero { text-align: center; padding: 56px 24px 32px; }
+.title-hero h1 { font-size: 36px; color: var(--accent); margin-bottom: 12px; }
+.title-hero p { color: var(--muted); max-width: 600px; margin: 0 auto 24px; font-size: 16px; }
+.scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+.scenario-card {
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+.scenario-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(201, 84, 45, 0.12);
+}
+.scenario-card h3 { font-size: 18px; color: var(--ink); margin-bottom: 4px; }
+.scenario-card .scenario-meta { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.scenario-card .scenario-hazards { font-size: 13px; color: var(--ink); }
+
+/* ───── Briefing screen ───── */
+.briefing { background: var(--card); border-radius: 12px; padding: 24px; border: 1px solid var(--line); }
+.briefing h2 { font-size: 26px; color: var(--accent); margin-bottom: 6px; }
+.briefing .briefing-meta { color: var(--muted); margin-bottom: 16px; font-size: 14px; }
+.briefing h3 { font-size: 16px; margin-top: 20px; margin-bottom: 8px; }
+.briefing p { margin-bottom: 10px; }
+.briefing .hazards-list { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0 16px; }
+.briefing .hazard-chip {
+  background: var(--accent-soft);
+  color: var(--ink);
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.briefing .legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; font-size: 13px; }
+.briefing .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.briefing .legend-swatch { width: 16px; height: 16px; border-radius: 3px; border: 1px solid var(--line); }
+.briefing .tech-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.briefing .tech-chip { background: var(--bg); border: 1px solid var(--line); padding: 4px 10px; border-radius: 12px; font-size: 13px; }
+.briefing .ngss-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+.briefing .ngss-footer strong { color: var(--ink); }
+.briefing-actions { margin-top: 20px; display: flex; gap: 12px; }
+
+/* ───── Build screen ───── */
+.build-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 20px;
+}
+.build-main { background: var(--card); border-radius: 12px; padding: 16px; border: 1px solid var(--line); }
+.build-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.build-header h2 { font-size: 20px; color: var(--accent); }
+.build-header .scenario-sub { font-size: 13px; color: var(--muted); }
+
+/* Grid */
+.grid-wrap { display: flex; justify-content: center; padding: 12px 0; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 64px);
+  grid-template-rows: repeat(6, 64px);
+  gap: 2px;
+  background: var(--line);
+  padding: 2px;
+  border-radius: 6px;
+}
+.tile {
+  background: var(--tile-bedrock);
+  border: 1px solid transparent;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  user-select: none;
+  transition: transform 0.05s;
+}
+.tile:hover { border-color: var(--accent); transform: scale(1.04); z-index: 2; }
+.tile.zone-ocean { background: var(--tile-ocean); cursor: not-allowed; }
+.tile.zone-coastal { background: var(--tile-coast); }
+.tile.zone-fill { background: var(--tile-fill); }
+.tile.zone-reclaimed_land { background: var(--tile-reclaimed); }
+.tile.zone-bedrock { background: var(--tile-bedrock); }
+.tile.zone-fault { background: var(--tile-fault); }
+.tile.zone-urban { background: var(--tile-urban); }
+.tile.zone-urban-near { background: var(--tile-urban-near); }
+.tile.zone-volcano { background: var(--tile-volcano); cursor: not-allowed; }
+.tile.zone-pyroclastic_zone { background: var(--tile-pyroclastic); }
+.tile.zone-lahar_valley { background: var(--tile-lahar); }
+.tile.zone-ashfall_plume { background: var(--tile-ash); }
+.tile.zone-lava_path { background: var(--tile-lava-hi); }
+.tile.zone-lava_adjacent { background: var(--tile-lava-med); }
+.tile.unbuildable { cursor: not-allowed; }
+.tile .tile-tech {
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1;
+}
+
+/* Sidebar */
+.build-side { display: flex; flex-direction: column; gap: 14px; }
+.budget-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+}
+.budget-card .budget-label { font-size: 12px; color: var(--muted); }
+.budget-card .budget-value { font-size: 26px; font-weight: 700; color: var(--ok); }
+.budget-card .budget-value.low { color: var(--warn); }
+.budget-card .budget-value.empty { color: var(--bad); }
+.palette {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+}
+.palette h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 8px; }
+.palette-list { display: flex; flex-direction: column; gap: 6px; }
+.palette-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: border-color 0.1s;
+}
+.palette-item:hover { border-color: var(--accent); }
+.palette-item.selected { border-color: var(--accent); background: var(--accent-soft); }
+.palette-item .palette-icon { font-size: 18px; }
+.palette-item .palette-cost { margin-left: auto; color: var(--muted); font-size: 12px; }
+.palette-item.unaffordable { opacity: 0.5; cursor: not-allowed; }
+.palette-info { font-size: 12px; color: var(--muted); margin-top: 6px; min-height: 32px; }
+
+.run-button {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  margin-top: auto;
+}
+.run-button:hover { background: #a8421f; }
+.run-button:disabled { background: var(--muted); cursor: not-allowed; }
+
+/* ───── Disaster banner (between Build and Debrief) ───── */
+.disaster-banner {
+  background: var(--bad);
+  color: white;
+  text-align: center;
+  padding: 32px 24px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  border-radius: 12px;
+  margin: 100px auto;
+  max-width: 600px;
+}
+
+/* ───── Debrief screen ───── */
+.debrief { background: var(--card); border-radius: 12px; padding: 24px; border: 1px solid var(--line); }
+.debrief h2 { font-size: 26px; color: var(--accent); margin-bottom: 4px; }
+.debrief .debrief-meta { color: var(--muted); margin-bottom: 20px; font-size: 14px; }
+.scoreboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 16px 0; }
+.scoreboard .score-card {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+}
+.scoreboard .score-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.scoreboard .score-value { font-size: 24px; font-weight: 700; color: var(--ink); margin-top: 4px; }
+.scoreboard .score-value.ok { color: var(--ok); }
+.scoreboard .score-value.warn { color: var(--warn); }
+.scoreboard .score-value.bad { color: var(--bad); }
+.grade-banner {
+  display: inline-block;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 22px;
+  font-weight: 800;
+  margin: 8px 0;
+  color: white;
+}
+.grade-banner.grade-A { background: var(--ok); }
+.grade-banner.grade-B { background: #4a8a3b; }
+.grade-banner.grade-C { background: var(--warn); }
+.grade-banner.grade-D { background: #c46b2d; }
+.grade-banner.grade-F { background: var(--bad); }
+.debrief-section { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+.debrief-section h3 { font-size: 16px; margin-bottom: 8px; }
+.outcome-list { font-size: 14px; }
+.outcome-list .outcome-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.outcome-list .outcome-row:last-child { border-bottom: none; }
+.outcome-list .outcome-detail { color: var(--muted); font-size: 13px; }
+
+.debrief-actions { margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* ───── Buttons ───── */
+.btn {
+  display: inline-block;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: #a8421f; }
+.btn-secondary { background: var(--bg); color: var(--ink); border: 1.5px solid var(--line); }
+.btn-secondary:hover { border-color: var(--accent); }
+
+/* ───── Responsive ───── */
+@media (max-width: 900px) {
+  .build-layout { grid-template-columns: 1fr; }
+  .build-side { order: -1; }
+  .grid { grid-template-columns: repeat(8, 44px); grid-template-rows: repeat(6, 44px); }
+  .tile { font-size: 16px; }
+}

@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tectonic City Builder — Earth & Environmental Science</title>
+<style>
+  :root {
+    --bg: #f6f4ee;
+    --ink: #1f2a37;
+    --muted: #5b6573;
+    --card: #ffffff;
+    --line: #d9d4c4;
+    --accent: #c9542d;
+    --accent-soft: #f4ddcf;
+    --ok: #2e7d4f;
+    --warn: #c9882d;
+    --bad: #b3261e;
+    --tile: #e9e4d3;
+    --tile-bedrock: #d6cdb0;
+    --tile-fill: #ddd0a0;
+    --tile-coast: #c6dbe2;
+    --tile-ocean: #6f9bb0;
+    --tile-fault: #b3826b;
+    --tile-lava-hi: #d97a4b;
+    --tile-lava-med: #e5b08c;
+    --tile-ash: #b9b09d;
+    --tile-volcano: #5b3a2b;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+  header.app-header {
+    padding: 14px 24px;
+    background: #1f2a37;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid var(--accent);
+  }
+  header.app-header h1 {
+    margin: 0;
+    font-size: 18px;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  header.app-header .subtitle { font-size: 12px; color: #aab4c0; }
+  main { max-width: 1280px; margin: 0 auto; padding: 18px; }
+
+  /* Screens */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* Title screen */
+  .title-hero {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+  .title-hero h2 { margin: 0 0 8px 0; font-size: 26px; }
+  .title-hero p { margin: 6px 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+  .scenario-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .scenario-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  }
+  .scenario-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    box-shadow: 0 6px 18px rgba(31, 42, 55, 0.08);
+  }
+  .scenario-card h3 { margin: 0 0 6px 0; font-size: 17px; }
+  .scenario-card .tag {
+    display: inline-block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+  .scenario-card p { font-size: 13px; color: var(--muted); line-height: 1.5; margin: 8px 0; }
+  .scenario-card ul { font-size: 12px; color: var(--muted); padding-left: 16px; margin: 6px 0 0 0; }
+
+  /* Briefing */
+  .briefing {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px;
+    margin-bottom: 16px;
+  }
+  .briefing h2 { margin: 0 0 4px 0; }
+  .briefing .geology-note {
+    background: #fbf7ec;
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .briefing .hazards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .hazard-chip {
+    background: #fbf2ec;
+    border: 1px solid var(--accent-soft);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  .hazard-chip strong { color: var(--accent); display: block; margin-bottom: 2px; }
+
+  /* Build screen layout */
+  .build-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr 280px;
+    gap: 14px;
+  }
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .panel h3 {
+    margin: 0 0 10px 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 6px;
+  }
+  .palette-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    background: #fdfcf6;
+    transition: all 0.1s;
+  }
+  .palette-item:hover { border-color: var(--accent); }
+  .palette-item.selected {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+  .palette-item.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .palette-item .icon { font-size: 22px; line-height: 1; }
+  .palette-item .meta { flex: 1; }
+  .palette-item .name { font-weight: 600; font-size: 13px; }
+  .palette-item .desc { font-size: 11px; color: var(--muted); }
+  .palette-item .cost { font-size: 11px; color: var(--accent); font-weight: 600; }
+
+  /* HUD */
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 12px;
+  }
+  .hud-stat { font-size: 13px; }
+  .hud-stat strong { display: block; font-size: 18px; color: var(--ink); }
+  .hud-stat .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+  .hud-actions { display: flex; gap: 8px; }
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+  }
+  button.primary {
+    background: var(--accent);
+    color: white;
+  }
+  button.primary:hover { background: #a3441f; }
+  button.primary:disabled { background: #bbb; cursor: not-allowed; }
+  button.secondary {
+    background: #e9e4d3;
+    color: var(--ink);
+  }
+  button.secondary:hover { background: #ddd6bf; }
+  button.ghost {
+    background: transparent;
+    color: var(--muted);
+    text-decoration: underline;
+  }
+
+  /* Grid */
+  .grid-wrap {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .grid-canvas {
+    display: grid;
+    gap: 2px;
+    background: var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+    aspect-ratio: 8 / 6;
+    user-select: none;
+  }
+  .tile {
+    background: var(--tile);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+    transition: filter 0.1s;
+    font-size: 24px;
+    line-height: 1;
+  }
+  .tile:hover { filter: brightness(1.05); }
+  .tile[data-zone="ocean"] { background: var(--tile-ocean); cursor: not-allowed; }
+  .tile[data-zone="coastal"] { background: var(--tile-coast); }
+  .tile[data-zone="fill"] { background: var(--tile-fill); }
+  .tile[data-zone="bedrock"] { background: var(--tile-bedrock); }
+  .tile[data-zone="fault"] { background: var(--tile-fault); }
+  .tile[data-zone="lava-high"] { background: var(--tile-lava-hi); }
+  .tile[data-zone="lava-med"] { background: var(--tile-lava-med); }
+  .tile[data-zone="ash"] { background: var(--tile-ash); }
+  .tile[data-zone="volcano"] { background: var(--tile-volcano); cursor: not-allowed; color: white; }
+  .tile.selected { outline: 3px solid var(--accent); outline-offset: -3px; z-index: 2; }
+  .tile .building-icon { font-size: 26px; }
+  .tile .tech-dot {
+    position: absolute;
+    bottom: 2px;
+    left: 2px;
+    display: flex;
+    gap: 1px;
+  }
+  .tile .tech-dot span {
+    width: 6px;
+    height: 6px;
+    background: var(--ink);
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .tile .zone-label {
+    position: absolute;
+    top: 2px;
+    left: 3px;
+    font-size: 8px;
+    color: rgba(31,42,55,0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    pointer-events: none;
+  }
+  .tile[data-zone="ocean"] .zone-label,
+  .tile[data-zone="volcano"] .zone-label { color: rgba(255,255,255,0.85); }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .legend .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .legend .swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.1);
+  }
+
+  /* Tile inspector */
+  .inspector {
+    margin-top: 12px;
+    padding: 10px;
+    border: 1px dashed var(--line);
+    border-radius: 6px;
+    background: #fbf9f1;
+    min-height: 60px;
+  }
+  .inspector h4 { margin: 0 0 6px 0; font-size: 13px; }
+  .inspector .hazard-bars { font-size: 11px; }
+  .inspector .hazard-bar {
+    display: grid;
+    grid-template-columns: 90px 1fr 30px;
+    align-items: center;
+    gap: 6px;
+    margin: 3px 0;
+  }
+  .inspector .hazard-bar .bar {
+    height: 8px;
+    background: #e9e4d3;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .inspector .hazard-bar .bar > div {
+    height: 100%;
+    background: var(--accent);
+  }
+  .inspector .tech-list {
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .inspector .tech-list span {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin: 2px 2px 0 0;
+    font-size: 10px;
+  }
+  .inspector .remove-btn {
+    margin-top: 8px;
+    font-size: 11px;
+    background: #fbe3e1;
+    color: var(--bad);
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-block;
+  }
+
+  /* Debrief */
+  .debrief-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .score-big {
+    font-size: 84px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    margin: 10px 0;
+  }
+  .score-meta {
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .breakdown {
+    margin-top: 16px;
+  }
+  .breakdown-row {
+    display: grid;
+    grid-template-columns: 1fr 80px;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--line);
+    font-size: 13px;
+  }
+  .building-survival-list {
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  .survival-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 90px;
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--line);
+    font-size: 12px;
+    align-items: center;
+  }
+  .survival-row .status {
+    text-align: right;
+    font-weight: 600;
+  }
+  .status-intact { color: var(--ok); }
+  .status-damaged { color: var(--warn); }
+  .status-destroyed { color: var(--bad); }
+  .lesson-panel {
+    background: #fbf7ec;
+    border-left: 3px solid var(--accent);
+    padding: 14px 16px;
+    margin-top: 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .lesson-panel h4 { margin: 0 0 6px 0; color: var(--accent); }
+
+  /* Disaster overlay */
+  .disaster-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+  .disaster-overlay.active { display: flex; }
+  .disaster-overlay .shake { animation: shake 0.12s infinite; }
+  @keyframes shake {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(-3px, 2px); }
+    50% { transform: translate(2px, -2px); }
+    75% { transform: translate(-2px, 3px); }
+    100% { transform: translate(0, 0); }
+  }
+
+  .footer-row { text-align: center; margin-top: 20px; font-size: 11px; color: var(--muted); }
+
+  @media (max-width: 980px) {
+    .build-layout { grid-template-columns: 1fr; }
+    .scenario-grid { grid-template-columns: 1fr; }
+    .debrief-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <h1>Tectonic City Builder</h1>
+    <div class="subtitle">Earth &amp; Environmental Science • Plate Tectonics Simulation</div>
+  </div>
+  <div id="header-scenario" style="font-size: 12px; color: #aab4c0;"></div>
+</header>
+
+<main>
+
+<!-- ===== SCREEN: TITLE ===== -->
+<section id="screen-title" class="screen active">
+  <div class="title-hero">
+    <h2>Choose your tectonic setting</h2>
+    <p>You are the chief planner. Build a functional city — housing, hospitals, schools, power, commerce — while protecting it from the geology underneath. Each setting produces different hazards. The same building, with the same technology, can survive in one place and be destroyed in another. That's the science you're learning.</p>
+    <p style="font-size: 12px;"><strong>Budget:</strong> $1.5M • <strong>Goal:</strong> Save lives, keep critical infrastructure standing, spend wisely.</p>
+  </div>
+  <div class="scenario-grid">
+    <div class="scenario-card" onclick="startScenario('cascadia')">
+      <span class="tag">Convergent Boundary</span>
+      <h3>Cascadia Coast</h3>
+      <p>A Pacific coastline above a subduction zone. The seafloor plate is diving beneath the continent. Stress is building.</p>
+      <ul>
+        <li>Megathrust earthquake (M9)</li>
+        <li>Tsunami waves following the quake</li>
+        <li>Liquefaction in soft sediment</li>
+      </ul>
+    </div>
+    <div class="scenario-card" onclick="startScenario('sanandreas')">
+      <span class="tag">Transform Boundary</span>
+      <h3>San Andreas Crossing</h3>
+      <p>A growing inland city crossed by a major strike-slip fault. Two plates are sliding past each other. The fault line is visible.</p>
+      <ul>
+        <li>Strike-slip earthquake (M7.8)</li>
+        <li>Surface rupture along the fault</li>
+        <li>Strong shaking citywide</li>
+      </ul>
+    </div>
+    <div class="scenario-card" onclick="startScenario('volcano')">
+      <span class="tag">Hotspot</span>
+      <h3>Volcano Island</h3>
+      <p>A volcanic island over a mantle hotspot. The active shield volcano dominates one side; prevailing winds carry ash the other way.</p>
+      <ul>
+        <li>Lava flows from the summit</li>
+        <li>Ashfall downwind</li>
+        <li>Small volcanic earthquakes</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-row">v1 prototype • single-class period builds recommended • <a href="#" onclick="event.preventDefault(); showHowTo();">How to play</a></div>
+</section>
+
+<!-- ===== SCREEN: BRIEFING ===== -->
+<section id="screen-briefing" class="screen">
+  <div class="briefing">
+    <h2 id="briefing-title"></h2>
+    <p id="briefing-intro" class="score-meta"></p>
+    <div id="briefing-geology" class="geology-note"></div>
+    <div class="hazards" id="briefing-hazards"></div>
+    <div style="margin-top: 18px; display: flex; gap: 8px;">
+      <button class="primary" onclick="goToBuild()">Start Building →</button>
+      <button class="ghost" onclick="goToTitle()">← Back to scenario picker</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SCREEN: BUILD ===== -->
+<section id="screen-build" class="screen">
+  <div class="hud">
+    <div class="hud-stat"><span class="label">Budget Remaining</span><strong id="hud-budget">$1,500,000</strong></div>
+    <div class="hud-stat"><span class="label">Buildings Placed</span><strong id="hud-buildings">0</strong></div>
+    <div class="hud-stat"><span class="label">Population Housed</span><strong id="hud-population">0</strong></div>
+    <div class="hud-stat"><span class="label">Critical Infrastructure</span><strong id="hud-critical">0/3</strong></div>
+    <div class="hud-actions">
+      <button class="secondary" onclick="resetBuild()">Reset</button>
+      <button class="primary" id="btn-run" onclick="runSimulation()">Run Simulation →</button>
+    </div>
+  </div>
+
+  <div class="build-layout">
+    <!-- Left: Building palette -->
+    <div class="panel">
+      <h3>Buildings</h3>
+      <div id="building-palette"></div>
+      <h3 style="margin-top: 16px;">Tech Upgrades</h3>
+      <div style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">Click a placed building to select it, then add tech.</div>
+      <div id="tech-palette"></div>
+      <h3 style="margin-top: 16px;">City Systems</h3>
+      <div id="city-systems"></div>
+    </div>
+
+    <!-- Center: Grid -->
+    <div class="grid-wrap">
+      <div id="grid-canvas" class="grid-canvas"></div>
+      <div class="legend" id="legend"></div>
+      <div style="margin-top: 10px; font-size: 11px; color: var(--muted);">
+        <strong>Goal:</strong> place at least <span id="goal-text">1 hospital, 1 school, 1 power plant, and housing</span>. Then run the simulation.
+      </div>
+      <div class="inspector" id="inspector">
+        <em style="font-size: 12px; color: var(--muted);">Hover a tile to preview its hazards. Click a placed building to inspect and add tech.</em>
+      </div>
+    </div>
+
+    <!-- Right: Reference panel -->
+    <div class="panel">
+      <h3>Scenario Reference</h3>
+      <div id="ref-summary" style="font-size: 12px; line-height: 1.55; color: var(--ink);"></div>
+      <h3 style="margin-top: 14px;">Hazard Glossary</h3>
+      <div id="hazard-glossary" style="font-size: 11px; line-height: 1.55; color: var(--muted);"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SCREEN: DEBRIEF ===== -->
+<section id="screen-debrief" class="screen">
+  <div class="hud">
+    <div class="hud-stat"><span class="label">Final Score</span><strong id="final-score-small">—</strong></div>
+    <div class="hud-stat"><span class="label">Grade</span><strong id="final-grade-small">—</strong></div>
+    <div class="hud-stat"><span class="label">People Saved</span><strong id="final-people">—</strong></div>
+    <div class="hud-stat"><span class="label">Buildings Intact</span><strong id="final-buildings">—</strong></div>
+    <div class="hud-actions">
+      <button class="secondary" onclick="goToTitle()">Try Another Scenario</button>
+      <button class="primary" onclick="rebuildSameScenario()">Rebuild This City</button>
+    </div>
+  </div>
+
+  <div class="debrief-grid">
+    <div class="panel">
+      <h3>Score Breakdown</h3>
+      <div style="text-align:center;">
+        <div class="score-big" id="big-score">—</div>
+        <div class="score-meta" id="big-grade">—</div>
+      </div>
+      <div class="breakdown" id="breakdown"></div>
+      <div class="lesson-panel" id="lesson-panel"></div>
+    </div>
+    <div class="panel">
+      <h3>What Happened To Each Building</h3>
+      <div class="building-survival-list" id="survival-list"></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div class="disaster-overlay" id="disaster-overlay">
+  <div class="shake" id="disaster-text">⚠️</div>
+</div>
+
+<script>
+/* =====================================================
+   GAME DATA
+===================================================== */
+
+const BUILDINGS = {
+  housing:    { name: "Housing",    icon: "🏠", cost: 50000,  pop: 100, critical: 1, desc: "Population homes" },
+  hospital:   { name: "Hospital",   icon: "🏥", cost: 200000, pop: 30,  critical: 3, desc: "Critical — saves lives during recovery" },
+  school:     { name: "School",     icon: "🏫", cost: 150000, pop: 200, critical: 2, desc: "Critical — kids inside during day" },
+  power:      { name: "Power Plant",icon: "⚡", cost: 300000, pop: 0,   critical: 2, desc: "Critical — city needs power" },
+  commercial: { name: "Commercial", icon: "🏪", cost: 80000,  pop: 20,  critical: 1, desc: "Shops & offices" }
+};
+
+const TECH = {
+  base_isolation: {
+    name: "Base Isolation",
+    cost: 100000,
+    desc: "Rubber+steel bearings decouple building from ground shaking",
+    protects: { shaking: 50, liquefaction: 20 }
+  },
+  shear_walls: {
+    name: "Shear Walls",
+    cost: 40000,
+    desc: "Reinforced concrete walls resist lateral forces",
+    protects: { shaking: 25 }
+  },
+  tsunami_wall: {
+    name: "Tsunami Wall",
+    cost: 80000,
+    desc: "Seawall+elevated platform; only useful in tsunami zones",
+    protects: { tsunami: 80 }
+  },
+  liquefaction_foundation: {
+    name: "Deep Foundation",
+    cost: 70000,
+    desc: "Piles driven to bedrock; resists soil liquefaction",
+    protects: { liquefaction: 60 }
+  },
+  lava_berm: {
+    name: "Lava Diversion Berm",
+    cost: 60000,
+    desc: "Earthen walls redirect slow lava flows around the building",
+    protects: { lava_flow: 70 }
+  },
+  ash_roof: {
+    name: "Ash-Resistant Roof",
+    cost: 30000,
+    desc: "Steep, reinforced roof sheds volcanic ash",
+    protects: { ash_fall: 60 }
+  }
+};
+
+const CITY_SYSTEMS = {
+  early_warning: {
+    name: "Early Warning System",
+    cost: 150000,
+    desc: "City-wide sensors + alerts → people evacuate before impact. Reduces casualties 30%, does not save structures."
+  }
+};
+
+const SCENARIOS = {
+  cascadia: {
+    name: "Cascadia Coast",
+    boundary: "Convergent (Subduction)",
+    intro: "You're planning a coastal city above a subduction zone. The Juan de Fuca-style plate is grinding under the continent. The last megathrust here was over 300 years ago — stress has been building ever since.",
+    geology: "Subduction zones produce the largest earthquakes on Earth (M9+) AND tsunamis, because the seafloor itself snaps upward when stress releases. Soft coastal sediment also liquefies under prolonged shaking — solid ground becomes quicksand.",
+    hazards_summary: [
+      { title: "Megathrust earthquake", desc: "City-wide shaking, M9 magnitude, lasts 3-5 minutes" },
+      { title: "Tsunami", desc: "30m+ waves reach coast within 15-30 min of quake" },
+      { title: "Liquefaction", desc: "Sediment-filled tiles turn to slurry; foundations sink or tilt" }
+    ],
+    zoning: function() {
+      // 8 cols x 6 rows. Col 0 = ocean. Col 1 = coast (tsunami high). Col 2-3 = fill (liquefaction). Col 4-7 = bedrock.
+      const z = [];
+      for (let r = 0; r < 6; r++) {
+        for (let c = 0; c < 8; c++) {
+          let zone, hazards;
+          if (c === 0) {
+            zone = "ocean";
+            hazards = { shaking: 0, tsunami: 0, liquefaction: 0 };
+          } else if (c === 1) {
+            zone = "coastal";
+            hazards = { shaking: 80, tsunami: 95, liquefaction: 50 };
+          } else if (c === 2 || c === 3) {
+            zone = "fill";
+            hazards = { shaking: 75, tsunami: c === 2 ? 40 : 10, liquefaction: 85 };
+          } else {
+            zone = "bedrock";
+            hazards = { shaking: 60, tsunami: 0, liquefaction: 10 };
+          }
+          z.push({ row: r, col: c, zone, hazards });
+        }
+      }
+      return z;
+    },
+    legend: [
+      { swatch: "var(--tile-ocean)", label: "Ocean (can't build)" },
+      { swatch: "var(--tile-coast)", label: "Coastal — tsunami high" },
+      { swatch: "var(--tile-fill)",  label: "Sediment fill — liquefaction high" },
+      { swatch: "var(--tile-bedrock)", label: "Bedrock — safest ground" }
+    ],
+    reference: "<strong>The science:</strong> Subduction zones produce megathrusts. The quake is bad, but the tsunami that follows can be worse. Tiles closer to the ocean are tsunami-vulnerable. Tiles built on soft sediment liquefy. Bedrock tiles still shake, but solid ground is your friend.",
+    tech_relevant: ["base_isolation","shear_walls","tsunami_wall","liquefaction_foundation","early_warning"]
+  },
+
+  sanandreas: {
+    name: "San Andreas Crossing",
+    boundary: "Transform (Strike-Slip)",
+    intro: "An inland city is growing right across a major transform fault. Two plates are sliding past each other horizontally. The fault line is mapped — you can see where the ground will tear.",
+    geology: "Transform faults like the San Andreas don't make tsunamis (no vertical seafloor movement). They make strong shaking AND surface rupture: the ground physically tears along the fault, displacing several meters horizontally. No building technology can survive sitting directly on a rupturing fault.",
+    hazards_summary: [
+      { title: "Strike-slip earthquake", desc: "M7.8, intense lateral shaking across the city" },
+      { title: "Surface rupture", desc: "Fault tiles displace 3-5 meters horizontally — buildings tear apart" },
+      { title: "No tsunami", desc: "This boundary doesn't lift seafloor — coastal flooding is not a risk" }
+    ],
+    zoning: function() {
+      // Fault line zigzags from top-left to bottom-right
+      const faultTiles = new Set(["0-1","1-2","2-3","2-4","3-4","4-5","5-6"]);
+      const z = [];
+      for (let r = 0; r < 6; r++) {
+        for (let c = 0; c < 8; c++) {
+          let zone, hazards;
+          const key = r + "-" + c;
+          if (faultTiles.has(key)) {
+            zone = "fault";
+            hazards = { shaking: 85, surface_rupture: 100 };
+          } else {
+            // Distance from fault affects shaking modestly
+            zone = "bedrock";
+            hazards = { shaking: 70, surface_rupture: 0 };
+          }
+          z.push({ row: r, col: c, zone, hazards });
+        }
+      }
+      return z;
+    },
+    legend: [
+      { swatch: "var(--tile-fault)", label: "Fault line — surface will rupture here" },
+      { swatch: "var(--tile-bedrock)", label: "Off-fault land" }
+    ],
+    reference: "<strong>The science:</strong> Strike-slip faults rip the ground apart along the fault trace. Nothing built directly on the fault survives. Off-fault, the whole city shakes hard — your only defense is seismic engineering (base isolation, shear walls). Tsunami walls are useless here.",
+    tech_relevant: ["base_isolation","shear_walls","early_warning"]
+  },
+
+  volcano: {
+    name: "Volcano Island",
+    boundary: "Hotspot (Intraplate)",
+    intro: "A volcanic island sits over a mantle hotspot. The shield volcano in the northeast is active — slow-moving basaltic lava builds the island. Prevailing winds carry ash toward the southwest.",
+    geology: "Hotspots aren't at plate boundaries — they're stationary mantle plumes. The Hawaiian shield volcanoes produce relatively gentle eruptions of fluid lava that flow downhill rather than explode. The hazard is more about WHERE you build than WHAT you build with.",
+    hazards_summary: [
+      { title: "Lava flow", desc: "Basaltic lava flows downhill from the summit; reaches some tiles" },
+      { title: "Ashfall", desc: "Winds carry ash southwest; weight collapses roofs over time" },
+      { title: "Volcanic earthquakes", desc: "Small (M3-5) tremors as magma moves" }
+    ],
+    zoning: function() {
+      // Volcano in top-right corner (rows 0-1, cols 6-7)
+      const z = [];
+      for (let r = 0; r < 6; r++) {
+        for (let c = 0; c < 8; c++) {
+          let zone, hazards;
+          const distFromVolcano = Math.max(Math.abs(r - 0.5), Math.abs(c - 6.5));
+          if (distFromVolcano <= 0.5) {
+            zone = "volcano";
+            hazards = { lava_flow: 0, ash_fall: 0, shaking: 0 };
+          } else if (distFromVolcano <= 2) {
+            zone = "lava-high";
+            hazards = { lava_flow: 90, ash_fall: 30, shaking: 35 };
+          } else if (distFromVolcano <= 3.5) {
+            zone = "lava-med";
+            hazards = { lava_flow: 50, ash_fall: 50, shaking: 25 };
+          } else {
+            zone = "ash";
+            hazards = { lava_flow: 5, ash_fall: 70, shaking: 20 };
+          }
+          z.push({ row: r, col: c, zone, hazards });
+        }
+      }
+      return z;
+    },
+    legend: [
+      { swatch: "var(--tile-volcano)", label: "Volcano (can't build)" },
+      { swatch: "var(--tile-lava-hi)", label: "Lava flow zone — high risk" },
+      { swatch: "var(--tile-lava-med)", label: "Lava + ashfall mixed" },
+      { swatch: "var(--tile-ash)", label: "Downwind — ashfall zone" }
+    ],
+    reference: "<strong>The science:</strong> At hotspot volcanoes the smart move is distance, not just technology. Tiles near the summit get lava — berms can deflect slow flows but not stop everything. Downwind tiles get ash that collapses ordinary roofs over weeks. Earthquakes here are minor.",
+    tech_relevant: ["lava_berm","ash_roof","shear_walls","early_warning"]
+  }
+};
+
+const HAZARD_GLOSSARY = {
+  shaking: "Ground motion from seismic waves. Affects all buildings unless designed to absorb/decouple shaking.",
+  tsunami: "Ocean wave from seafloor displacement. Inland buildings are safe; coastal buildings need walls or elevation.",
+  liquefaction: "Loose, water-saturated sediment loses strength during shaking and behaves like liquid. Foundations sink/tilt.",
+  surface_rupture: "Ground physically tears along a fault. Nothing built directly on the fault survives.",
+  lava_flow: "Molten rock flowing downhill. Slow but unstoppable for buildings in its path; berms can redirect.",
+  ash_fall: "Volcanic ash accumulates on roofs. Heavy enough to collapse unreinforced roofs over time."
+};
+
+/* =====================================================
+   STATE
+===================================================== */
+
+const state = {
+  scenario: null,        // key
+  tiles: [],             // [{row, col, zone, hazards}]
+  buildings: {},         // "row-col" -> { type, tech: Set, cost }
+  budget: 1500000,
+  selectedBuilding: null, // building type from palette
+  selectedTile: null,     // "row-col" if a placed building is selected
+  systems: new Set()      // city-wide
+};
+
+const STARTING_BUDGET = 1500000;
+
+/* =====================================================
+   NAVIGATION
+===================================================== */
+
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  window.scrollTo(0, 0);
+}
+
+function startScenario(key) {
+  state.scenario = key;
+  const scen = SCENARIOS[key];
+  document.getElementById("briefing-title").textContent = scen.name;
+  document.getElementById("briefing-intro").textContent = scen.intro;
+  document.getElementById("briefing-geology").innerHTML = "<strong>The geology:</strong> " + scen.geology;
+  const hazWrap = document.getElementById("briefing-hazards");
+  hazWrap.innerHTML = scen.hazards_summary.map(h =>
+    `<div class="hazard-chip"><strong>${h.title}</strong>${h.desc}</div>`
+  ).join("");
+  showScreen("screen-briefing");
+}
+
+function goToTitle() {
+  document.getElementById("header-scenario").textContent = "";
+  showScreen("screen-title");
+}
+
+function goToBuild() {
+  initBuildScreen();
+  showScreen("screen-build");
+}
+
+function rebuildSameScenario() {
+  initBuildScreen();
+  showScreen("screen-build");
+}
+
+/* =====================================================
+   BUILD SCREEN
+===================================================== */
+
+function initBuildScreen() {
+  const scen = SCENARIOS[state.scenario];
+  state.tiles = scen.zoning();
+  state.buildings = {};
+  state.budget = STARTING_BUDGET;
+  state.selectedBuilding = null;
+  state.selectedTile = null;
+  state.systems = new Set();
+
+  document.getElementById("header-scenario").textContent = scen.name + " • " + scen.boundary;
+
+  renderBuildingPalette();
+  renderTechPalette();
+  renderCitySystems();
+  renderGrid();
+  renderLegend();
+  renderReference();
+  renderHazardGlossary();
+  updateHUD();
+  updateInspector(null);
+}
+
+function renderBuildingPalette() {
+  const wrap = document.getElementById("building-palette");
+  wrap.innerHTML = Object.keys(BUILDINGS).map(key => {
+    const b = BUILDINGS[key];
+    return `<div class="palette-item" data-building="${key}" onclick="selectBuilding('${key}')">
+      <span class="icon">${b.icon}</span>
+      <div class="meta">
+        <div class="name">${b.name}</div>
+        <div class="desc">${b.desc}</div>
+        <div class="cost">$${(b.cost/1000).toFixed(0)}K</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderTechPalette() {
+  const scen = SCENARIOS[state.scenario];
+  const wrap = document.getElementById("tech-palette");
+  const relevant = scen.tech_relevant;
+  wrap.innerHTML = Object.keys(TECH).filter(k => k !== "early_warning").map(key => {
+    const t = TECH[key];
+    const isRelevant = relevant.includes(key);
+    return `<div class="palette-item ${isRelevant ? '' : 'disabled'}" data-tech="${key}" onclick="addTech('${key}')" title="${isRelevant ? '' : 'Not useful in this scenario'}">
+      <span class="icon">🛠</span>
+      <div class="meta">
+        <div class="name">${t.name}</div>
+        <div class="desc">${t.desc}</div>
+        <div class="cost">+$${(t.cost/1000).toFixed(0)}K</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderCitySystems() {
+  const wrap = document.getElementById("city-systems");
+  wrap.innerHTML = Object.keys(CITY_SYSTEMS).map(key => {
+    const s = CITY_SYSTEMS[key];
+    const owned = state.systems.has(key);
+    return `<div class="palette-item ${owned ? 'selected' : ''}" onclick="toggleSystem('${key}')">
+      <span class="icon">📡</span>
+      <div class="meta">
+        <div class="name">${s.name}${owned ? ' ✓' : ''}</div>
+        <div class="desc">${s.desc}</div>
+        <div class="cost">$${(s.cost/1000).toFixed(0)}K</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderGrid() {
+  const grid = document.getElementById("grid-canvas");
+  grid.style.gridTemplateColumns = "repeat(8, 1fr)";
+  grid.style.gridTemplateRows = "repeat(6, 1fr)";
+  grid.innerHTML = state.tiles.map(t => {
+    const key = t.row + "-" + t.col;
+    const b = state.buildings[key];
+    const isSelected = state.selectedTile === key;
+    const buildingIcon = b ? BUILDINGS[b.type].icon : "";
+    const techDots = b ? Array.from(b.tech).map(()=>'<span></span>').join('') : "";
+    return `<div class="tile ${isSelected ? 'selected' : ''}" data-zone="${t.zone}" data-key="${key}"
+              onmouseover="hoverTile('${key}')" onclick="clickTile('${key}')">
+      <span class="zone-label">${shortZoneLabel(t.zone)}</span>
+      ${buildingIcon ? `<span class="building-icon">${buildingIcon}</span>` : ""}
+      ${techDots ? `<span class="tech-dot">${techDots}</span>` : ""}
+    </div>`;
+  }).join("");
+}
+
+function shortZoneLabel(zone) {
+  return ({
+    "ocean": "Ocean",
+    "coastal": "Coast",
+    "fill": "Fill",
+    "bedrock": "Bedrock",
+    "fault": "Fault",
+    "lava-high": "Lava Hi",
+    "lava-med": "Lava/Ash",
+    "ash": "Ash",
+    "volcano": "Volcano"
+  })[zone] || "";
+}
+
+function renderLegend() {
+  const scen = SCENARIOS[state.scenario];
+  const wrap = document.getElementById("legend");
+  wrap.innerHTML = scen.legend.map(l =>
+    `<div class="legend-item"><span class="swatch" style="background:${l.swatch}"></span>${l.label}</div>`
+  ).join("");
+}
+
+function renderReference() {
+  document.getElementById("ref-summary").innerHTML = SCENARIOS[state.scenario].reference;
+}
+
+function renderHazardGlossary() {
+  const scen = SCENARIOS[state.scenario];
+  // Collect hazards that actually appear in this scenario
+  const present = new Set();
+  state.tiles.forEach(t => Object.keys(t.hazards).forEach(h => { if (t.hazards[h] > 0) present.add(h); }));
+  const wrap = document.getElementById("hazard-glossary");
+  wrap.innerHTML = Array.from(present).map(h =>
+    `<div style="margin-bottom:6px;"><strong>${h.replace("_"," ")}</strong>: ${HAZARD_GLOSSARY[h]}</div>`
+  ).join("");
+}
+
+function selectBuilding(key) {
+  state.selectedBuilding = key;
+  state.selectedTile = null;
+  document.querySelectorAll('#building-palette .palette-item').forEach(el => {
+    el.classList.toggle('selected', el.dataset.building === key);
+  });
+  renderGrid();
+  updateInspector(null);
+}
+
+function clickTile(key) {
+  const tile = state.tiles.find(t => (t.row+"-"+t.col) === key);
+  if (!tile) return;
+
+  // Blocked zones
+  if (tile.zone === "ocean" || tile.zone === "volcano") return;
+
+  const existing = state.buildings[key];
+
+  if (existing) {
+    // select for inspection / tech upgrade
+    state.selectedTile = key;
+    state.selectedBuilding = null;
+    document.querySelectorAll('#building-palette .palette-item').forEach(el => el.classList.remove('selected'));
+    renderGrid();
+    updateInspector(key);
+    return;
+  }
+
+  // Place new building if one is selected in palette
+  if (!state.selectedBuilding) {
+    updateInspector(null, "Pick a building from the left panel, then click a tile to place it.");
+    return;
+  }
+  const b = BUILDINGS[state.selectedBuilding];
+  if (state.budget < b.cost) {
+    updateInspector(null, "Not enough budget for " + b.name + ".");
+    return;
+  }
+  state.buildings[key] = { type: state.selectedBuilding, tech: new Set(), cost: b.cost };
+  state.budget -= b.cost;
+  state.selectedTile = key;
+  updateHUD();
+  renderGrid();
+  updateInspector(key);
+}
+
+function hoverTile(key) {
+  if (state.selectedTile) return; // don't change inspector while inspecting a placed building
+  const t = state.tiles.find(t => (t.row+"-"+t.col) === key);
+  if (!t) return;
+  renderHazardPreview(t, null);
+}
+
+function addTech(techKey) {
+  if (!state.selectedTile) {
+    updateInspector(null, "Select a placed building first.");
+    return;
+  }
+  const scen = SCENARIOS[state.scenario];
+  if (!scen.tech_relevant.includes(techKey)) {
+    updateInspector(state.selectedTile, "That tech doesn't help in this scenario.");
+    return;
+  }
+  const b = state.buildings[state.selectedTile];
+  if (b.tech.has(techKey)) {
+    updateInspector(state.selectedTile, "Already installed.");
+    return;
+  }
+  const cost = TECH[techKey].cost;
+  if (state.budget < cost) {
+    updateInspector(state.selectedTile, "Not enough budget for " + TECH[techKey].name);
+    return;
+  }
+  b.tech.add(techKey);
+  b.cost += cost;
+  state.budget -= cost;
+  updateHUD();
+  renderGrid();
+  updateInspector(state.selectedTile);
+}
+
+function removeBuilding() {
+  if (!state.selectedTile) return;
+  const b = state.buildings[state.selectedTile];
+  if (!b) return;
+  state.budget += b.cost; // refund
+  delete state.buildings[state.selectedTile];
+  state.selectedTile = null;
+  updateHUD();
+  renderGrid();
+  updateInspector(null);
+}
+
+function toggleSystem(key) {
+  const cost = CITY_SYSTEMS[key].cost;
+  if (state.systems.has(key)) {
+    state.systems.delete(key);
+    state.budget += cost;
+  } else {
+    if (state.budget < cost) {
+      alert("Not enough budget for " + CITY_SYSTEMS[key].name);
+      return;
+    }
+    state.systems.add(key);
+    state.budget -= cost;
+  }
+  renderCitySystems();
+  updateHUD();
+}
+
+function updateHUD() {
+  document.getElementById("hud-budget").textContent = "$" + state.budget.toLocaleString();
+  document.getElementById("hud-budget").style.color = state.budget < 50000 ? "var(--bad)" : "var(--ink)";
+  const placed = Object.values(state.buildings);
+  document.getElementById("hud-buildings").textContent = placed.length;
+  const pop = placed.reduce((sum, b) => sum + BUILDINGS[b.type].pop, 0);
+  document.getElementById("hud-population").textContent = pop.toLocaleString();
+  const criticals = placed.filter(b => ["hospital","school","power"].includes(b.type)).map(b => b.type);
+  const unique = new Set(criticals);
+  document.getElementById("hud-critical").textContent = unique.size + "/3";
+  document.getElementById("hud-critical").style.color = unique.size === 3 ? "var(--ok)" : "var(--warn)";
+
+  // Disable run button until goals met
+  const hasHousing = placed.some(b => b.type === "housing");
+  const ready = hasHousing && unique.size >= 3;
+  document.getElementById("btn-run").disabled = !ready;
+}
+
+function updateInspector(key, message) {
+  const inspector = document.getElementById("inspector");
+  if (message) {
+    inspector.innerHTML = `<div style="font-size:12px; color: var(--bad);">${message}</div>`;
+    return;
+  }
+  if (!key) {
+    inspector.innerHTML = `<em style="font-size: 12px; color: var(--muted);">Hover a tile to preview its hazards. Click a placed building to inspect and add tech.</em>`;
+    return;
+  }
+  const tile = state.tiles.find(t => (t.row+"-"+t.col) === key);
+  const b = state.buildings[key];
+  renderHazardPreview(tile, b);
+}
+
+function renderHazardPreview(tile, building) {
+  const inspector = document.getElementById("inspector");
+  const hazards = tile.hazards;
+  const bars = Object.keys(hazards).filter(k => hazards[k] > 0).map(k =>
+    `<div class="hazard-bar"><span>${k.replace("_"," ")}</span><div class="bar"><div style="width:${hazards[k]}%"></div></div><span>${hazards[k]}</span></div>`
+  ).join("");
+  let html = `<h4>Tile (row ${tile.row}, col ${tile.col}) • ${tile.zone}</h4>
+              <div class="hazard-bars">${bars || '<em>No hazards on this tile.</em>'}</div>`;
+  if (building) {
+    const b = BUILDINGS[building.type];
+    const techList = Array.from(building.tech).map(t => `<span>${TECH[t].name}</span>`).join("") || "<em style='color:var(--muted);'>no tech installed</em>";
+    html += `<div style="margin-top:10px;font-size:12px;"><strong>${b.icon} ${b.name}</strong> — pop ${b.pop}, cost $${(building.cost/1000).toFixed(0)}K</div>
+             <div class="tech-list">${techList}</div>
+             <div class="remove-btn" onclick="removeBuilding()">× Remove building (refund cost)</div>`;
+  }
+  inspector.innerHTML = html;
+}
+
+function resetBuild() {
+  if (!confirm("Reset all placements? Budget will be restored.")) return;
+  initBuildScreen();
+}
+
+/* =====================================================
+   SIMULATION
+===================================================== */
+
+function runSimulation() {
+  const scen = SCENARIOS[state.scenario];
+  // Show disaster overlay briefly
+  const overlay = document.getElementById("disaster-overlay");
+  const text = document.getElementById("disaster-text");
+  text.textContent = disasterText(state.scenario);
+  overlay.classList.add("active");
+  setTimeout(() => {
+    overlay.classList.remove("active");
+    computeAndShowDebrief();
+  }, 2200);
+}
+
+function disasterText(scen) {
+  return ({
+    cascadia: "⚠️ M9.0 MEGATHRUST + TSUNAMI INCOMING ⚠️",
+    sanandreas: "⚠️ M7.8 STRIKE-SLIP RUPTURE ⚠️",
+    volcano: "⚠️ ERUPTION — LAVA + ASHFALL ⚠️"
+  })[scen];
+}
+
+function computeBuildingOutcome(building, tile) {
+  // Total protection per hazard, summing all tech
+  const protection = {};
+  building.tech.forEach(tk => {
+    const p = TECH[tk].protects || {};
+    Object.keys(p).forEach(h => {
+      protection[h] = (protection[h] || 0) + p[h];
+    });
+  });
+  // Basic shaking baseline (building codes) — only counts off-fault
+  if (tile.zone !== "fault") {
+    protection.shaking = (protection.shaking || 0) + 30;
+  }
+  // Damage per hazard
+  let totalDamage = 0;
+  const damageBreakdown = {};
+  Object.keys(tile.hazards).forEach(h => {
+    const exposure = tile.hazards[h];
+    const def = protection[h] || 0;
+    const dmg = Math.max(0, exposure - def);
+    damageBreakdown[h] = dmg;
+    totalDamage += dmg;
+  });
+  // Surface rupture is a one-shot kill
+  if ((tile.hazards.surface_rupture || 0) > 0) {
+    totalDamage = Math.max(totalDamage, 150);
+  }
+  // Classify
+  let status, casualtyMult;
+  if (totalDamage < 30) { status = "intact"; casualtyMult = 0; }
+  else if (totalDamage < 60) { status = "damaged"; casualtyMult = 0.3; }
+  else if (totalDamage < 100) { status = "heavily damaged"; casualtyMult = 0.6; }
+  else { status = "destroyed"; casualtyMult = 1.0; }
+  // Early warning reduces casualties by 30%
+  if (state.systems.has("early_warning")) casualtyMult *= 0.7;
+
+  return { status, totalDamage, damageBreakdown, casualtyMult, protection };
+}
+
+function computeAndShowDebrief() {
+  const placed = Object.entries(state.buildings).map(([key, b]) => {
+    const [r, c] = key.split("-").map(Number);
+    const tile = state.tiles.find(t => t.row === r && t.col === c);
+    const outcome = computeBuildingOutcome(b, tile);
+    return { key, building: b, tile, outcome };
+  });
+
+  // Population stats
+  let popTotal = 0, popSaved = 0;
+  let criticalTotal = 0, criticalIntact = 0;
+  let critWeight = { hospital: 3, school: 2, power: 2 };
+
+  placed.forEach(p => {
+    const bDef = BUILDINGS[p.building.type];
+    popTotal += bDef.pop;
+    popSaved += Math.round(bDef.pop * (1 - p.outcome.casualtyMult));
+    if (critWeight[p.building.type]) {
+      const w = critWeight[p.building.type];
+      criticalTotal += w;
+      // Critical "intact" credit scales with damage: intact full, damaged half, heavy quarter, destroyed zero
+      if (p.outcome.status === "intact") criticalIntact += w;
+      else if (p.outcome.status === "damaged") criticalIntact += w * 0.5;
+      else if (p.outcome.status === "heavily damaged") criticalIntact += w * 0.25;
+    }
+  });
+
+  const popScore = popTotal > 0 ? (popSaved / popTotal) * 50 : 0;
+  const critScore = criticalTotal > 0 ? (criticalIntact / criticalTotal) * 30 : 0;
+  // Cost efficiency: 0% bonus if 0 unused, up to 20pts if up to 30% unused
+  const unusedPct = state.budget / STARTING_BUDGET;
+  const costScore = Math.min(unusedPct, 0.30) * (20 / 0.30);
+
+  const total = Math.round(popScore + critScore + costScore);
+  const grade =
+    total >= 85 ? "A" :
+    total >= 70 ? "B" :
+    total >= 55 ? "C" :
+    total >= 40 ? "D" : "F";
+
+  // Render
+  document.getElementById("big-score").textContent = total;
+  document.getElementById("big-grade").textContent = "Grade: " + grade;
+  document.getElementById("final-score-small").textContent = total;
+  document.getElementById("final-grade-small").textContent = grade;
+  document.getElementById("final-people").textContent = popSaved.toLocaleString() + "/" + popTotal.toLocaleString();
+  document.getElementById("final-buildings").textContent =
+    placed.filter(p => p.outcome.status === "intact").length + "/" + placed.length;
+
+  document.getElementById("breakdown").innerHTML = `
+    <div class="breakdown-row"><span>Population saved (max 50)</span><span>${popScore.toFixed(1)}</span></div>
+    <div class="breakdown-row"><span>Critical infrastructure (max 30)</span><span>${critScore.toFixed(1)}</span></div>
+    <div class="breakdown-row"><span>Cost efficiency (max 20)</span><span>${costScore.toFixed(1)}</span></div>
+    <div class="breakdown-row"><strong>Total</strong><strong>${total}</strong></div>
+  `;
+
+  // Survival list
+  document.getElementById("survival-list").innerHTML = placed.map(p => {
+    const bDef = BUILDINGS[p.building.type];
+    const statusClass = p.outcome.status === "intact" ? "status-intact" :
+                       p.outcome.status === "destroyed" ? "status-destroyed" : "status-damaged";
+    const techList = Array.from(p.building.tech).map(t => TECH[t].name).join(", ") || "none";
+    return `<div class="survival-row">
+      <span style="font-size:20px;">${bDef.icon}</span>
+      <span>
+        <strong>${bDef.name}</strong> at (${p.tile.row},${p.tile.col}) • <em>${p.tile.zone}</em><br>
+        <span style="color:var(--muted); font-size:11px;">Tech: ${techList}</span>
+      </span>
+      <span class="status ${statusClass}">${p.outcome.status.toUpperCase()}</span>
+    </div>`;
+  }).join("") || "<em>No buildings placed.</em>";
+
+  // Lesson panel
+  document.getElementById("lesson-panel").innerHTML = generateLesson(placed, total, grade);
+
+  showScreen("screen-debrief");
+}
+
+function generateLesson(placed, total, grade) {
+  const scen = SCENARIOS[state.scenario];
+  const insights = [];
+
+  // Scenario-specific feedback
+  if (state.scenario === "cascadia") {
+    const coastalBuildings = placed.filter(p => p.tile.zone === "coastal");
+    const coastalProtected = coastalBuildings.filter(p => p.building.tech.has("tsunami_wall"));
+    if (coastalBuildings.length > 0 && coastalProtected.length < coastalBuildings.length) {
+      insights.push("You placed buildings in the coastal zone without tsunami walls. In a subduction megathrust, the quake is followed by the tsunami within minutes — base isolation prevents earthquake damage but can't stop water. Coastal buildings need tsunami walls OR they need to be moved inland to bedrock.");
+    }
+    const fillBuildings = placed.filter(p => p.tile.zone === "fill");
+    const fillProtected = fillBuildings.filter(p => p.building.tech.has("liquefaction_foundation"));
+    if (fillBuildings.length > 0 && fillProtected.length < fillBuildings.length) {
+      insights.push("Buildings on sediment fill need deep-foundation pilings driven to bedrock. Without them, soft saturated sediment liquefies during shaking — the building tilts or sinks regardless of its earthquake bracing.");
+    }
+    if (coastalBuildings.length === 0 && fillBuildings.length === 0) {
+      insights.push("Smart move: you avoided the coastal and sediment-fill zones entirely. Real Pacific Northwest planners are actively trying to do this for new critical infrastructure (hospitals, schools, fire stations).");
+    }
+  }
+  if (state.scenario === "sanandreas") {
+    const onFault = placed.filter(p => p.tile.zone === "fault");
+    if (onFault.length > 0) {
+      insights.push(`You placed ${onFault.length} building(s) directly on the fault line. No engineering technology can survive surface rupture — when two plates slide past each other along a transform fault, the ground physically tears apart by several meters. This is why real fault-zoning laws in California prohibit building on the trace of an active fault.`);
+    } else {
+      insights.push("Good call: you kept buildings off the fault trace. That's the single most important decision in transform-fault city planning. Now the remaining question is shaking resistance — base isolation and shear walls do real work against M7+ ground motion.");
+    }
+    const noShakingProtection = placed.filter(p => !p.building.tech.has("base_isolation") && !p.building.tech.has("shear_walls"));
+    if (noShakingProtection.length > 0) {
+      insights.push(`${noShakingProtection.length} building(s) had no shaking protection at all. In a strike-slip M7.8, the whole city shakes hard — even off-fault buildings need at least shear walls.`);
+    }
+  }
+  if (state.scenario === "volcano") {
+    const highRisk = placed.filter(p => p.tile.zone === "lava-high");
+    if (highRisk.length > 0) {
+      const withBerm = highRisk.filter(p => p.building.tech.has("lava_berm"));
+      if (withBerm.length < highRisk.length) {
+        insights.push("Buildings in the lava-flow zone need diversion berms — earthen walls that redirect slow basaltic lava around the building. Even then, distance matters more than technology in volcanic settings.");
+      }
+    }
+    const downwind = placed.filter(p => p.tile.zone === "ash" || p.tile.zone === "lava-med");
+    const ashUnprotected = downwind.filter(p => !p.building.tech.has("ash_roof"));
+    if (ashUnprotected.length > 0) {
+      insights.push("Downwind buildings need ash-resistant roofs. Wet volcanic ash gets heavy fast — ordinary flat or weak roofs collapse under the weight within days of an eruption.");
+    }
+    if (placed.every(p => p.tile.zone === "ash" || p.tile.zone === "lava-med")) {
+      insights.push("You kept the city downwind/downhill but at distance — that's the playbook real hotspot communities follow. Hawaii's main population centers are deliberately on the older, quieter side of each island.");
+    }
+  }
+
+  // Score-level summary
+  let header;
+  if (grade === "A") header = "Excellent — your decisions matched the geology.";
+  else if (grade === "B") header = "Solid planning with a few gaps to address.";
+  else if (grade === "C") header = "Mixed results — the science is uneven across your city.";
+  else header = "The geology beat the city this time — here's what to fix.";
+
+  return `<h4>${header}</h4>${insights.map(i => `<p style="margin:6px 0;">${i}</p>`).join("")}
+          <p style="margin-top:10px;font-size:12px;color:var(--muted);"><strong>Boundary type:</strong> ${scen.boundary} — different boundaries produce fundamentally different hazards. That's why the same building works in one scenario and fails in another.</p>`;
+}
+
+function showHowTo() {
+  alert("HOW TO PLAY:\n\n1. Pick a tectonic scenario.\n2. Read the briefing — note what hazards will hit.\n3. Place buildings on the grid (click a building type, then click a tile).\n4. Click any placed building to select it, then add tech upgrades.\n5. You must place at least: housing, 1 hospital, 1 school, 1 power plant.\n6. Click 'Run Simulation' to trigger the disaster and see how your city held up.\n7. Read the debrief — it explains what the science says about your choices.");
+}
+
+</script>
+</body>
+</html>
