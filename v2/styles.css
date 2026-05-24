@@ -481,6 +481,154 @@ body {
   transform-box: fill-box;
 }
 
+/* ═════════════════════════════════════════════════════════════════
+   Phase C — DAMAGE STATES + DISASTER ANIMATION
+   ═════════════════════════════════════════════════════════════════ */
+
+/* ───── Damage state classes on .tile-sprite ───── */
+.tile-sprite { transition: transform 0.18s ease-out; transform-origin: center bottom; }
+.tile-sprite.damage-cracked { transform: rotate(-2deg); }
+.tile-sprite.damage-heavy   { transform: rotate(-4deg); filter: brightness(0.85) saturate(0.85); }
+.tile-sprite.damage-destroyed { /* rubble sprite handles its own look */ }
+
+/* Crack overlay */
+.damage-cracks path { fill: none; stroke: #2a1a10; stroke-width: 0.8; stroke-linecap: round; }
+.damage-heavy-marks .roof-break  { fill: #2a1a10; }
+.damage-heavy-marks .heavy-crack { fill: none; stroke: #2a1a10; stroke-width: 1.2; stroke-linecap: round; }
+.damage-heavy-marks .smoke-wisp circle {
+  fill: #888;
+  opacity: 0;
+  animation: smokeWisp 1.6s ease-out infinite;
+}
+.damage-heavy-marks .smoke-wisp circle:nth-child(1) { animation-delay: 0s; }
+.damage-heavy-marks .smoke-wisp circle:nth-child(2) { animation-delay: 0.3s; }
+.damage-heavy-marks .smoke-wisp circle:nth-child(3) { animation-delay: 0.6s; }
+@keyframes smokeWisp {
+  0%   { opacity: 0; transform: translateY(0) scale(0.6); }
+  30%  { opacity: 0.6; }
+  100% { opacity: 0; transform: translateY(-12px) scale(1.4); }
+}
+
+/* Rubble sprite (destroyed) */
+.sprite-rubble .rubble-pile  { fill: #7a6a55; stroke: var(--ink); stroke-width: 0.5; }
+.sprite-rubble .rubble-stone { fill: #4a3a28; }
+.sprite-rubble .flame-plume .flame-outer { fill: #d97a4b; opacity: 0.9; animation: flameFlicker 0.35s ease-in-out infinite alternate; }
+.sprite-rubble .flame-plume .flame-inner { fill: #ffcf66; opacity: 0.95; animation: flameFlicker 0.25s ease-in-out infinite alternate-reverse; }
+.sprite-rubble .rubble-smoke circle { fill: #888; opacity: 0; animation: rubbleSmoke 1.8s ease-out infinite; }
+.sprite-rubble .rubble-smoke circle:nth-child(1) { animation-delay: 0s; }
+.sprite-rubble .rubble-smoke circle:nth-child(2) { animation-delay: 0.5s; }
+.sprite-rubble .rubble-smoke circle:nth-child(3) { animation-delay: 1.0s; }
+@keyframes flameFlicker {
+  0%   { transform: scaleY(1)   translateY(0); }
+  100% { transform: scaleY(1.1) translateY(-1px); }
+}
+@keyframes rubbleSmoke {
+  0%   { opacity: 0;   transform: translateY(0)   scale(0.6); }
+  30%  { opacity: 0.6; }
+  100% { opacity: 0;   transform: translateY(-16px) scale(1.6); }
+}
+
+/* ───── Grid shake during quake scenarios ───── */
+.grid.is-shaking { animation: gridShake 0.18s ease-in-out infinite; }
+@keyframes gridShake {
+  0%, 100% { transform: translate(0, 0); }
+  25%      { transform: translate(2px, -1px); }
+  75%      { transform: translate(-2px, 1px); }
+}
+
+/* ───── Inline disaster banner ───── */
+.disaster-banner-inline {
+  background: var(--bad);
+  color: white;
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  display: none;
+}
+.disaster-banner-inline.visible { display: block; animation: bannerPulse 0.5s ease-out; }
+@keyframes bannerPulse {
+  0%   { transform: scale(0.98); opacity: 0; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+/* ───── Hazard overlay (positioned over .grid during animation) ───── */
+.grid-wrap { position: relative; }
+.hazard-overlay {
+  position: absolute;
+  inset: 12px;
+  width: calc(100% - 24px);
+  height: calc(100% - 24px);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Tōhoku / Cascadia — blue wave sweeping left → right */
+.hazard-wave .wave-mass  { fill: rgba(111, 155, 176, 0.55); }
+.hazard-wave .wave-crest { fill: none; stroke: rgba(255,255,255,0.7); stroke-width: 3; }
+.anim-wave-sweep-grid {
+  animation: waveSweepGrid 1.5s ease-out forwards;
+  transform-origin: left center;
+}
+@keyframes waveSweepGrid {
+  0%   { transform: translateX(0)    scaleX(0.4); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translateX(420px) scaleX(1.4); opacity: 0.7; }
+}
+
+/* Anatolian — red glow flash along fault diagonal */
+.hazard-fault .fault-glow { stroke: rgba(217, 122, 75, 0.55); fill: none; stroke-linecap: round; }
+.hazard-fault .fault-line { stroke: var(--bad); fill: none; stroke-linecap: round; }
+.anim-fault-flash {
+  animation: faultFlash 1.5s ease-out forwards;
+  transform-origin: center;
+}
+@keyframes faultFlash {
+  0%   { opacity: 0; }
+  20%  { opacity: 1; }
+  40%  { opacity: 0.3; }
+  60%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Merapi — pyroclastic cone expanding + lahar streaming */
+.hazard-merapi .pyroclastic-cone { fill: rgba(217, 122, 75, 0.55); }
+.hazard-merapi .lahar-flow       { fill: none; stroke: rgba(140, 122, 82, 0.75); stroke-width: 28; stroke-linecap: round; }
+.anim-pyroclastic-expand { transform-origin: 480px 32px; animation: pyroclasticExpand 1.5s ease-out forwards; }
+@keyframes pyroclasticExpand {
+  0%   { transform: scale(0.1); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: scale(2);   opacity: 0.5; }
+}
+.anim-lahar-stream path {
+  stroke-dasharray: 400;
+  stroke-dashoffset: 400;
+  animation: laharStream 1.5s 0.2s ease-out forwards;
+}
+@keyframes laharStream {
+  0%   { stroke-dashoffset: 400; }
+  100% { stroke-dashoffset: 0;   }
+}
+
+/* Hawaii — orange lava extending along path */
+.hazard-lava-extend .lava-path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 28;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: lavaReveal 1.5s ease-out forwards;
+}
+@keyframes lavaReveal {
+  0%   { stroke-dashoffset: 100; }
+  100% { stroke-dashoffset: 0;   }
+}
+
 /* ───── Responsive ───── */
 @media (max-width: 900px) {
   .build-layout { grid-template-columns: 1fr; }
@@ -488,4 +636,5 @@ body {
   .grid { grid-template-columns: repeat(8, 44px); grid-template-rows: repeat(6, 44px); }
   .tile { font-size: 0; }
   .tech-demo-popover { width: 160px; }
+  .disaster-banner-inline { font-size: 14px; padding: 8px 12px; }
 }

@@ -83,23 +83,31 @@ function appendOverlay(parent, techKey) {
   appendSvgChildren(parent, overlay.svg);
 }
 
-function buildBuildingNode(buildingKey, techSet) {
+function buildBuildingNode(buildingKey, techSet, damageState) {
   const svg = document.createElementNS(SVG_NS, "svg");
   svg.setAttribute("viewBox", "0 0 72 64");
   svg.setAttribute("preserveAspectRatio", "xMidYMax meet");
   svg.classList.add("tile-sprite");
+  if (damageState) svg.classList.add(`damage-${damageState}`);
 
-  // Behind layer (foundations under, lahar trench)
+  // Destroyed: skip the building entirely, show rubble + flame + smoke
+  if (damageState === "destroyed") {
+    appendSvgChildren(svg, RUBBLE_SPRITE);
+    return svg;
+  }
+
+  // Otherwise compose normally
   for (const tk of behindLayerOrder(techSet)) appendOverlay(svg, tk);
-  // Front-tile layer (tsunami wall — in front of tile but behind building base)
   for (const tk of frontTileLayerOrder(techSet)) appendOverlay(svg, tk);
-  // Building body
   appendSvgChildren(svg, BUILDING_SPRITES[buildingKey]);
-  // Roof — steep if ash_roof installed, else flat
   const roofKey = techSet.has("ash_roof") ? `${buildingKey}_steep` : `${buildingKey}_flat`;
   appendSvgChildren(svg, BUILDING_ROOFS[roofKey]);
-  // Front layer (overlays drawn on top of building)
   for (const tk of frontLayerOrder(techSet)) appendOverlay(svg, tk);
+
+  // Damage marks on top
+  if (damageState === "cracked") appendSvgChildren(svg, DAMAGE_OVERLAYS.cracked);
+  if (damageState === "heavy")   appendSvgChildren(svg, DAMAGE_OVERLAYS.heavy);
+
   return svg;
 }
 
@@ -421,13 +429,100 @@ function runSimulation() {
     return;
   }
   const sc = SCENARIOS[state.scenarioKey];
-  document.getElementById("disaster-banner").textContent = sc.disaster_banner;
-  showScreen("disaster");
+
+  // Compute outcome upfront so we know the per-tile damage bands.
+  state.lastOutcome = computeOutcome();
+
+  // Stay on the build screen; play the disaster on the grid.
+  showInlineBanner(sc.disaster_banner);
+  insertHazardOverlay(state.scenarioKey);
+  if (scenarioShakes(state.scenarioKey)) {
+    document.getElementById("grid").classList.add("is-shaking");
+  }
+  // Disable the run button to prevent double-runs.
+  const runBtn = document.getElementById("run-button");
+  if (runBtn) runBtn.disabled = true;
+
+  // Stage 1: 0.5s in, start staggered damage application.
+  setTimeout(() => applyDamageStates(state.lastOutcome), 500);
+
+  // Stage 2: 2.5s total — stop shaking, remove overlay, transition to debrief.
   setTimeout(() => {
-    state.lastOutcome = computeOutcome();
+    document.getElementById("grid").classList.remove("is-shaking");
+    removeHazardOverlay();
+    hideInlineBanner();
+    if (runBtn) runBtn.disabled = false;
     renderDebrief();
     showScreen("debrief");
-  }, 2200);
+  }, 2500);
+}
+
+// ════════════════════════════════════════════════════════════════════
+// PHASE C — disaster animation helpers
+// ════════════════════════════════════════════════════════════════════
+
+function showInlineBanner(text) {
+  const b = document.getElementById("disaster-banner-inline");
+  if (!b) return;
+  b.textContent = text;
+  b.classList.add("visible");
+}
+function hideInlineBanner() {
+  const b = document.getElementById("disaster-banner-inline");
+  if (b) b.classList.remove("visible");
+}
+
+function scenarioShakes(scenarioKey) {
+  return scenarioKey === "tohoku" || scenarioKey === "cascadia" || scenarioKey === "anatolian" || scenarioKey === "merapi";
+}
+
+function insertHazardOverlay(scenarioKey) {
+  const svgFragment = HAZARD_VISUALS[scenarioKey];
+  if (!svgFragment) return;
+  const gridWrap = document.querySelector(".grid-wrap");
+  if (!gridWrap) return;
+  // Remove any stale overlay first.
+  removeHazardOverlay();
+  // The hazard visual is itself a full <svg> — parse and append.
+  const parsed = new DOMParser().parseFromString(svgFragment, "image/svg+xml");
+  const svg = parsed.documentElement;
+  if (svg.tagName.toLowerCase() === "svg") {
+    gridWrap.appendChild(svg);
+  }
+}
+function removeHazardOverlay() {
+  const existing = document.querySelector(".grid-wrap .hazard-overlay");
+  if (existing) existing.remove();
+}
+
+function damageStateForScore(damage) {
+  if (damage < 30) return null;
+  if (damage < 60) return "cracked";
+  if (damage < 100) return "heavy";
+  return "destroyed";
+}
+
+function applyDamageStates(outcome) {
+  // Map each placement to its tile DOM index in render order, so we can
+  // stagger the updates with setTimeouts.
+  const gridTiles = Array.from(document.getElementById("grid").children);
+  let i = 0;
+  for (const row of outcome.perBuilding) {
+    const damageState = damageStateForScore(row.damage);
+    if (!damageState) { i++; continue; }
+    const tileIndex = state.grid.findIndex((t) => t.col === row.tile.col && t.row === row.tile.row);
+    const tileEl = gridTiles[tileIndex];
+    if (!tileEl) { i++; continue; }
+    const placement = state.placements.get(`${row.tile.col},${row.tile.row}`);
+    setTimeout(() => {
+      // Rebuild the building node with damageState applied.
+      const oldSprite = tileEl.querySelector(".tile-sprite");
+      if (oldSprite) oldSprite.remove();
+      const newSprite = buildBuildingNode(placement.building, placement.tech, damageState);
+      tileEl.insertBefore(newSprite, tileEl.firstChild);
+    }, i * 80);
+    i++;
+  }
 }
 
 function computeOutcome() {

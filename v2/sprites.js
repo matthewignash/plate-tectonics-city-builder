@@ -366,3 +366,109 @@ const TECH_DEMOS = {
       <text x="40" y="58" text-anchor="middle" class="demo-label">bunker saves people; building lost</text>
     </svg>`,
 };
+
+// ════════════════════════════════════════════════════════════════════
+// DAMAGE OVERLAYS — added to the tile-sprite SVG when a building reaches
+// the cracked or heavy damage band (intact = no overlay; destroyed
+// replaces the whole sprite with RUBBLE_SPRITE).
+// ════════════════════════════════════════════════════════════════════
+
+const DAMAGE_OVERLAYS = {
+  cracked: `
+    <g class="damage-overlay damage-cracks">
+      <path d="M 24 24 L 28 32 L 32 30 L 36 38 L 40 36 L 44 42"/>
+      <path d="M 30 22 L 32 28 L 36 30"/>
+      <path d="M 38 26 L 40 32 L 42 30"/>
+    </g>`,
+  heavy: `
+    <g class="damage-overlay damage-heavy-marks">
+      <!-- jagged roof break — small triangular gap on building top -->
+      <polygon points="32 18 38 14 40 22 36 20 34 24" class="roof-break"/>
+      <!-- structural crack large -->
+      <path d="M 22 24 L 28 36 L 30 30 L 34 42 L 38 36 L 44 44" class="heavy-crack"/>
+      <!-- smoke wisp above building -->
+      <g class="smoke-wisp">
+        <circle cx="34" cy="8" r="3"/>
+        <circle cx="38" cy="4" r="2.5"/>
+        <circle cx="42" cy="10" r="3.5"/>
+      </g>
+    </g>`,
+};
+
+// ════════════════════════════════════════════════════════════════════
+// RUBBLE_SPRITE — replaces the entire building sprite when damage ≥100.
+// Pile + flame + smoke plume.
+// ════════════════════════════════════════════════════════════════════
+
+const RUBBLE_SPRITE = `
+  <g class="sprite-rubble">
+    <!-- rubble pile -->
+    <path d="M 18 44 L 22 38 L 26 40 L 30 36 L 34 42 L 38 36 L 42 40 L 46 38 L 50 44 Z" class="rubble-pile"/>
+    <!-- dark debris stones -->
+    <circle cx="24" cy="42" r="2" class="rubble-stone"/>
+    <circle cx="32" cy="41" r="2.5" class="rubble-stone"/>
+    <circle cx="40" cy="42" r="2" class="rubble-stone"/>
+    <circle cx="46" cy="43" r="1.5" class="rubble-stone"/>
+    <!-- flame plume -->
+    <g class="flame-plume">
+      <path d="M 30 38 Q 32 26 34 32 Q 36 20 38 30 Q 40 24 38 38 Z" class="flame-outer"/>
+      <path d="M 32 38 Q 34 30 36 34 Q 36 28 36 38 Z" class="flame-inner"/>
+    </g>
+    <!-- smoke above flame -->
+    <g class="rubble-smoke">
+      <circle cx="34" cy="20" r="4"/>
+      <circle cx="38" cy="14" r="3"/>
+      <circle cx="32" cy="10" r="3.5"/>
+    </g>
+  </g>`;
+
+// ════════════════════════════════════════════════════════════════════
+// HAZARD_VISUALS — full-grid SVG overlays played during the disaster
+// animation. viewBox 512×384 matches the 8×6 tile grid (64px tiles, gaps
+// approximate). Positioned absolute over the .grid container at render time.
+// Animations driven by CSS keyframes in styles.css.
+// ════════════════════════════════════════════════════════════════════
+
+const HAZARD_VISUALS = {
+  tohoku: `
+    <svg viewBox="0 0 512 384" class="hazard-overlay hazard-wave" preserveAspectRatio="none">
+      <g class="anim-wave-sweep-grid">
+        <path d="M 0 0 Q 70 60 50 120 Q 80 180 50 240 Q 80 300 60 384 L 0 384 Z" class="wave-mass"/>
+        <path d="M 50 30 Q 90 60 70 120 Q 100 180 80 240 Q 110 300 90 360" class="wave-crest"/>
+      </g>
+    </svg>`,
+  cascadia: `
+    <svg viewBox="0 0 512 384" class="hazard-overlay hazard-wave" preserveAspectRatio="none">
+      <g class="anim-wave-sweep-grid">
+        <path d="M 0 0 Q 70 60 50 120 Q 80 180 50 240 Q 80 300 60 384 L 0 384 Z" class="wave-mass"/>
+        <path d="M 50 30 Q 90 60 70 120 Q 100 180 80 240 Q 110 300 90 360" class="wave-crest"/>
+      </g>
+    </svg>`,
+  anatolian: `
+    <svg viewBox="0 0 512 384" class="hazard-overlay hazard-fault" preserveAspectRatio="none">
+      <g class="anim-fault-flash">
+        <!-- fault diagonal: at row r, fault at col 1+r → centers (64*(1+r)+32, 64*r+32) -->
+        <!-- start (96, 32) → end (96+5*64, 32+5*64) = (416, 352) -->
+        <line x1="96" y1="32" x2="416" y2="352" class="fault-glow" stroke-width="48"/>
+        <line x1="96" y1="32" x2="416" y2="352" class="fault-line" stroke-width="6"/>
+      </g>
+    </svg>`,
+  merapi: `
+    <svg viewBox="0 0 512 384" class="hazard-overlay hazard-merapi" preserveAspectRatio="none">
+      <!-- pyroclastic cone expanding from volcano tile (col=7, row=0 = center 480,32) -->
+      <g class="anim-pyroclastic-expand">
+        <circle cx="480" cy="32" r="180" class="pyroclastic-cone"/>
+      </g>
+      <!-- lahar flow down valley (rows 3-5, cols 4-6) -->
+      <g class="anim-lahar-stream">
+        <path d="M 416 96 Q 380 192 350 224 Q 320 288 288 352" class="lahar-flow"/>
+      </g>
+    </svg>`,
+  hawaii: `
+    <svg viewBox="0 0 512 384" class="hazard-overlay hazard-lava-extend" preserveAspectRatio="none">
+      <!-- lava path: (7,0)→(6,1)→(5,1)→(5,2)→(4,2)→(4,3)→(3,3)→(3,4)→(2,4)→(2,5)→(1,5)→(0,5) -->
+      <!-- centers: 480,32 → 416,96 → 352,96 → 352,160 → 288,160 → 288,224 → 224,224 → 224,288 → 160,288 → 160,352 → 96,352 → 32,352 -->
+      <path d="M 480 32 L 416 96 L 352 96 L 352 160 L 288 160 L 288 224 L 224 224 L 224 288 L 160 288 L 160 352 L 96 352 L 32 352"
+            class="lava-path anim-lava-reveal" pathLength="100"/>
+    </svg>`,
+};
