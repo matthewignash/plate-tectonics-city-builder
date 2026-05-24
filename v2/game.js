@@ -526,6 +526,45 @@ function applyDamageStates(outcome) {
   }
 }
 
+/**
+ * Per-hazard "correct" engineering response — used by Phase F's
+ * historical-accuracy scoring. Each entry: threshold below which the
+ * hazard doesn't really require defense, and the tech that defends
+ * against it. `tech: null` means "no engineering helps — the right
+ * answer is don't build here" (fault rupture, pyroclastic zone, the
+ * actual lava-flow path).
+ */
+const CORRECT_TECH_BY_HAZARD = {
+  tsunami:      { threshold: 60, tech: "tsunami_wall" },
+  liquefaction: { threshold: 70, tech: "deep_foundation" },
+  shaking:      { threshold: 70, tech: "base_isolation" },
+  rupture:      { threshold: 80, tech: null },
+  pyroclastic:  { threshold: 80, tech: null },
+  lava:         { threshold: 80, tech: null },
+  lahar:        { threshold: 50, tech: "lahar_diversion" },
+  ashfall:      { threshold: 50, tech: "ash_roof" },
+  // fire isn't directly defended by any tile-level tech in v2; ignored here.
+};
+
+/**
+ * Returns true if the placement made historically-correct choices for
+ * every above-threshold hazard at its tile:
+ *   - For hazards with a defined tech: the matching tech must be installed.
+ *   - For hazards with tech: null: the building shouldn't be there at all
+ *     (counts as incorrect — the lesson was "don't build").
+ * A tile with no above-threshold hazards is automatically correct.
+ */
+function placementIsHistoricallyCorrect(placement, tile) {
+  for (const [hz, intensity] of Object.entries(tile.hazards || {})) {
+    const rule = CORRECT_TECH_BY_HAZARD[hz];
+    if (!rule) continue;
+    if (intensity < rule.threshold) continue;
+    if (rule.tech === null) return false; // shouldn't have built here
+    if (!placement.tech.has(rule.tech)) return false; // missing the right tech
+  }
+  return true;
+}
+
 function computeOutcome() {
   const perBuilding = [];
   let totalPopulation = 0;
@@ -590,13 +629,37 @@ function computeOutcome() {
   const spent = STARTING_BUDGET - state.budget;
   const spentPct = spent / STARTING_BUDGET;
   const costEff = 1 - Math.abs(spentPct - 0.75) * 1.2;
+
+  // Historical accuracy — % of placements that made the right tech call
+  let historicallyCorrect = 0;
+  for (const [tileKey, placement] of state.placements) {
+    const [c, r] = tileKey.split(",").map(Number);
+    const tile = state.grid.find((t) => t.col === c && t.row === r);
+    if (placementIsHistoricallyCorrect(placement, tile)) historicallyCorrect++;
+  }
+  const histAccPct = state.placements.size > 0 ? historicallyCorrect / state.placements.size : 1;
+
   const score = Math.round(
-    Math.max(0, Math.min(100, popPct * 50 + critPct * 30 + Math.max(0, costEff) * 20))
+    Math.max(0, Math.min(100,
+      popPct * 45 + critPct * 25 + Math.max(0, costEff) * 20 + histAccPct * 10
+    ))
   );
   const grade =
     score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
 
-  return { perBuilding, totalPopulation, populationSaved, criticalPlaced, criticalIntact, spent, score, grade };
+  return {
+    perBuilding,
+    totalPopulation,
+    populationSaved,
+    criticalPlaced,
+    criticalIntact,
+    historicallyCorrect,
+    placementsTotal: state.placements.size,
+    historicalAccuracyPct: histAccPct,
+    spent,
+    score,
+    grade,
+  };
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -613,12 +676,14 @@ function renderDebrief() {
   const popClass = popRatio > 0.7 ? "ok" : popRatio > 0.4 ? "warn" : "bad";
   const critRatio = o.criticalIntact / Math.max(1, o.criticalPlaced);
   const critClass = critRatio > 0.7 ? "ok" : critRatio > 0.4 ? "warn" : "bad";
+  const histRatio = o.historicalAccuracyPct;
+  const histClass = histRatio > 0.7 ? "ok" : histRatio > 0.4 ? "warn" : "bad";
 
   root.append(
     el("h2", { text: `Debrief: ${sc.name}` }),
     el("div", { class: "debrief-meta", text: sc.disaster }),
     el("div", { class: `grade-banner grade-${o.grade}`, text: `Final grade: ${o.grade} (${o.score}/100)` }),
-    buildScoreboard(o, popClass, critClass),
+    buildScoreboard(o, popClass, critClass, histClass),
     buildPerBuildingSection(o),
     buildCompareToHistorySection(o, sc),
     buildDebriefNgssSection(sc),
@@ -626,12 +691,13 @@ function renderDebrief() {
   );
 }
 
-function buildScoreboard(o, popClass, critClass) {
+function buildScoreboard(o, popClass, critClass, histClass) {
+  const histPct = Math.round((o.historicalAccuracyPct || 0) * 100);
   return el("div", { class: "scoreboard" },
     scoreCard("Population saved", `${o.populationSaved.toLocaleString()} / ${o.totalPopulation.toLocaleString()}`, popClass),
     scoreCard("Critical infra intact", `${o.criticalIntact} / ${o.criticalPlaced}`, critClass),
-    scoreCard("Budget spent", `$${formatCost(o.spent)}`, ""),
-    scoreCard("Final score", `${o.score} / 100`, "")
+    scoreCard("Historical Awareness", `${o.historicallyCorrect} / ${o.placementsTotal} (${histPct}%)`, histClass),
+    scoreCard("Budget spent", `$${formatCost(o.spent)}`, "")
   );
 }
 
