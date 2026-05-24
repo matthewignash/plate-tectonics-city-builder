@@ -20,6 +20,23 @@
   <div class="scenario-grid" id="scenario-picker">
     <!-- populated by game.js -->
   </div>
+  <div class="title-actions">
+    <button class="btn-library" id="open-library">📚 Case Study Library</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SCREEN 6: CASE STUDY LIBRARY (Phase D)        -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="screen-library" class="screen">
+  <div class="screen-header">
+    <h1>Case Study Library</h1>
+    <p>Nine real-world events catalogued. Each entry includes what happened, what engineering or its absence mattered, primary sources, and the NGSS standards it most strongly supports. Click any card to expand.</p>
+  </div>
+  <div class="cs-grid" id="cs-library-grid"><!-- populated by game.js --></div>
+  <div class="library-back">
+    <button class="btn btn-secondary" id="library-back">← Back to title</button>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════ -->
@@ -89,6 +106,7 @@
 <!-- Scripts: data first, sprites, game logic last -->
 <script src="scenarios.js"></script>
 <script src="tech.js"></script>
+<script src="case-studies.js"></script>
 <script src="sprites.js"></script>
 <script src="game.js"></script>
 

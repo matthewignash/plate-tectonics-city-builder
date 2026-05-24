@@ -629,6 +629,126 @@ body {
   100% { stroke-dashoffset: 0;   }
 }
 
+/* ═════════════════════════════════════════════════════════════════
+   Phase D — CASE STUDIES (briefing + debrief + library)
+   ═════════════════════════════════════════════════════════════════ */
+
+/* ───── Title screen — Library entry button ───── */
+.title-actions { text-align: center; margin: 12px 0 16px; }
+.btn-library {
+  background: var(--card);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.btn-library:hover { background: var(--accent-soft); }
+
+/* ───── Case study cards (shared across briefing/debrief/library) ───── */
+.cs-section { margin-top: 18px; }
+.cs-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+.cs-lead {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.case-study-card {
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.case-study-card:hover { border-color: var(--accent); }
+.case-study-card .cs-title { font-weight: 700; color: var(--ink); font-size: 14px; }
+.case-study-card .cs-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.case-study-card .cs-hook { font-size: 13px; color: var(--ink); margin-top: 6px; }
+.case-study-card .cs-expand-hint { font-size: 11px; color: var(--accent); margin-top: 6px; font-weight: 600; }
+.case-study-card.expanded { box-shadow: 0 4px 16px rgba(201, 84, 45, 0.10); border-color: var(--accent); }
+.case-study-card.expanded .cs-expand-hint { display: none; }
+.case-study-card .cs-detail { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.case-study-card.expanded .cs-detail { display: block; }
+.case-study-card .cs-detail h4 {
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-top: 10px; margin-bottom: 4px;
+}
+.case-study-card .cs-detail h4:first-child { margin-top: 0; }
+.case-study-card .cs-detail p { font-size: 13px; margin-bottom: 8px; line-height: 1.5; }
+.case-study-card .cs-takeaway {
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-style: italic;
+  margin-bottom: 8px;
+}
+
+/* Sources list */
+.cs-sources { display: flex; flex-direction: column; gap: 6px; }
+.cs-source {
+  font-size: 12px;
+  padding: 6px 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  border-left: 2px solid var(--line);
+}
+.cs-source a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.cs-source a:hover { text-decoration: underline; }
+.cs-source .cs-source-opvl { color: var(--muted); margin-top: 2px; font-size: 11px; }
+
+/* NGSS chips */
+.cs-ngss { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.cs-ngss-chip {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Image placeholder */
+.cs-image-placeholder {
+  border: 2px dashed var(--line);
+  background: var(--bg);
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.cs-image-placeholder strong { color: var(--ink); font-style: normal; }
+
+/* ───── Library screen ───── */
+#screen-library .screen-header { text-align: center; padding: 24px 16px 8px; }
+#screen-library .screen-header h1 { font-size: 28px; color: var(--accent); }
+#screen-library .screen-header p { color: var(--muted); margin-top: 6px; max-width: 600px; margin-left: auto; margin-right: auto; }
+.cs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.cs-grid .case-study-card { margin-bottom: 0; }
+.library-back { margin-top: 18px; text-align: center; }
+
 /* ───── Responsive ───── */
 @media (max-width: 900px) {
   .build-layout { grid-template-columns: 1fr; }

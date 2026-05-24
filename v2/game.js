@@ -175,6 +175,7 @@ function renderBriefing() {
     el("h3", { text: "Engineering tech available for this scenario" }),
     buildTechList(sc.tech_relevant),
     buildNgssFooter(sc),
+    buildRealEventsSection(sc),
     buildBriefingActions()
   );
 }
@@ -619,6 +620,7 @@ function renderDebrief() {
     el("div", { class: `grade-banner grade-${o.grade}`, text: `Final grade: ${o.grade} (${o.score}/100)` }),
     buildScoreboard(o, popClass, critClass),
     buildPerBuildingSection(o),
+    buildCompareToHistorySection(o, sc),
     buildDebriefNgssSection(sc),
     buildDebriefActions()
   );
@@ -686,10 +688,149 @@ function buildDebriefActions() {
 // BOOTSTRAP
 // ════════════════════════════════════════════════════════════════════
 
+// ════════════════════════════════════════════════════════════════════
+// PHASE D — case studies (briefing + debrief + library)
+// ════════════════════════════════════════════════════════════════════
+
+function buildCaseStudyCard(csKey, opts) {
+  opts = opts || {};
+  const cs = CASE_STUDIES[csKey];
+  if (!cs) return el("div", { class: "case-study-card", text: `(missing case study: ${csKey})` });
+
+  const card = el("div", { class: "case-study-card" + (opts.startsExpanded ? " expanded" : "") });
+  card.appendChild(el("div", { class: "cs-title", text: cs.title }));
+  card.appendChild(el("div", { class: "cs-meta", text: `${cs.date} · ${cs.scale} · ${cs.death_toll}` }));
+  card.appendChild(el("div", { class: "cs-hook", text: firstSentence(cs.summary) }));
+  card.appendChild(el("div", { class: "cs-expand-hint", text: "Click to read full case study →" }));
+
+  const detail = el("div", { class: "cs-detail" });
+  if (opts.takeaway) {
+    detail.appendChild(el("div", { class: "cs-takeaway", text: opts.takeaway }));
+  }
+  detail.appendChild(el("h4", { text: "What happened" }));
+  detail.appendChild(el("p", { text: cs.summary }));
+  detail.appendChild(el("h4", { text: "What the engineering taught us" }));
+  detail.appendChild(el("p", { text: cs.lesson }));
+
+  detail.appendChild(el("h4", { text: "Photo" }));
+  const imgPlaceholder = el("div", { class: "cs-image-placeholder" });
+  imgPlaceholder.append(el("strong", { text: "Image placeholder. " }), cs.image.caption || "");
+  detail.appendChild(imgPlaceholder);
+
+  detail.appendChild(el("h4", { text: "Primary sources" }));
+  const sourcesEl = el("div", { class: "cs-sources" });
+  for (const src of cs.sources) {
+    const link = el("a", { href: src.url, target: "_blank", rel: "noopener", text: src.label });
+    link.addEventListener("click", (e) => e.stopPropagation());
+    const opvl = el("div", { class: "cs-source-opvl", text: src.opvl || "" });
+    sourcesEl.appendChild(el("div", { class: "cs-source" }, link, opvl));
+  }
+  detail.appendChild(sourcesEl);
+
+  detail.appendChild(el("h4", { text: "NGSS standards exercised" }));
+  const ngssEl = el("div", { class: "cs-ngss" });
+  for (const code of cs.ngss) {
+    ngssEl.appendChild(el("span", { class: "cs-ngss-chip", text: code }));
+  }
+  detail.appendChild(ngssEl);
+
+  card.appendChild(detail);
+  card.addEventListener("click", () => card.classList.toggle("expanded"));
+  return card;
+}
+
+function firstSentence(text) {
+  const idx = text.indexOf(". ");
+  return idx > 0 ? text.slice(0, idx + 1) : text;
+}
+
+function buildRealEventsSection(scenario) {
+  const linked = (scenario.case_studies || []).filter((k) => CASE_STUDIES[k]);
+  if (linked.length === 0) return el("div");
+  const section = el("div", { class: "cs-section" },
+    el("h3", { class: "cs-section-title", text: "Real events this scenario is based on" })
+  );
+  for (const csKey of linked) section.appendChild(buildCaseStudyCard(csKey));
+  return section;
+}
+
+function buildCompareToHistorySection(outcome, scenario) {
+  // Tally failure modes from destroyed/heavy buildings
+  const modeCount = {};
+  for (const row of outcome.perBuilding) {
+    if (row.damage < 60) continue;
+    const dominant = findDominantHazard(row.tile);
+    if (dominant) modeCount[dominant] = (modeCount[dominant] || 0) + 1;
+  }
+  const picks = pickCaseStudiesForFailureModes(modeCount);
+
+  const section = el("div", { class: "cs-section" });
+  section.appendChild(el("h3", { class: "cs-section-title", text: "Compare to history" }));
+
+  if (picks.length > 0) {
+    section.appendChild(el("p", { class: "cs-lead", text: "Your failure modes echo what happened in these real events:" }));
+    for (const p of picks) section.appendChild(buildCaseStudyCard(p.case, { takeaway: p.takeaway }));
+  } else {
+    section.appendChild(el("p", { class: "cs-lead", text: "You avoided the worst this run — here's what happened when others didn't." }));
+    const linked = (scenario.case_studies || []).filter((k) => CASE_STUDIES[k]).slice(0, 2);
+    for (const csKey of linked) section.appendChild(buildCaseStudyCard(csKey));
+  }
+  return section;
+}
+
+function findDominantHazard(tile) {
+  let best = null, bestV = 0;
+  for (const [k, v] of Object.entries(tile.hazards || {})) {
+    if (v > bestV) { bestV = v; best = k; }
+  }
+  return best;
+}
+
+function pickCaseStudiesForFailureModes(modeCount) {
+  const sorted = Object.entries(modeCount).sort((a, b) => b[1] - a[1]);
+  const seen = new Set();
+  const picks = [];
+  for (const [hazard] of sorted) {
+    const candidates = HAZARD_TO_CASE_STUDY[hazard] || [];
+    for (const c of candidates) {
+      if (!seen.has(c.case)) {
+        picks.push(c);
+        seen.add(c.case);
+        if (picks.length >= 2) return picks;
+      }
+    }
+  }
+  return picks;
+}
+
+function renderLibrary() {
+  const grid = document.getElementById("cs-library-grid");
+  if (!grid) return;
+  clear(grid);
+  for (const csKey of Object.keys(CASE_STUDIES)) {
+    grid.appendChild(buildCaseStudyCard(csKey));
+  }
+}
+
+function showLibrary() {
+  renderLibrary();
+  showScreen("library");
+}
+
+// ════════════════════════════════════════════════════════════════════
+// BOOTSTRAP
+// ════════════════════════════════════════════════════════════════════
+
 document.addEventListener("DOMContentLoaded", () => {
   renderScenarioPicker();
   document.getElementById("run-button").addEventListener("click", runSimulation);
   document.getElementById("back-to-picker").addEventListener("click", () => showScreen("title"));
+
+  // Phase D — Case Study Library
+  const openLib = document.getElementById("open-library");
+  if (openLib) openLib.addEventListener("click", showLibrary);
+  const libBack = document.getElementById("library-back");
+  if (libBack) libBack.addEventListener("click", () => showScreen("title"));
 
   // Right-click on tile removes placement (refunds 50%)
   document.getElementById("grid").addEventListener("contextmenu", (e) => {
